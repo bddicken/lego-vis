@@ -1,1 +1,1 @@
-# lego-vis
+Lego data visualizer.
