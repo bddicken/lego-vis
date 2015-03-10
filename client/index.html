@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+<head></head>
+<body></body>
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script>
+
+var container = d3.select("body").append("div");
+
+d3.csv("download/data/sets.csv", function(error, data) {
+
+    var allSets = container.selectAll(".div")
+        .data(data)
+        .enter()
+        .append("div");
+    
+    allSets
+        .append("img")
+        .attr("class", "link")
+        .attr("src", function(d) { return "download/img/sets/" + d.set_id + ".jpg"; })
+        .attr("width", "30px" )
+        .attr("height", "30px" );
+    
+    allSets
+        .append("span")
+        .attr("class", "set")
+        .html(function(d) { return d.descr + " : " + d.t1 + " : " + d.year; });
+});
+
+</script>
+</html>
+
