@@ -29,6 +29,8 @@ ${SDIR}/fetch-img.sh
 #${SDIR}/consolidate-img.sh
 popd
 
+${SDIR}/gen-static-page.sh
+
 popd
 
 echo "SUCESS IN ALL THINGS!"
