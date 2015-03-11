@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+<head></head>
+<body>
+<h1>Set Description:</h1>
+<div id="set"></div>
+<h1>Parts Listing:</h1>
+<div id="pieces"></div>
+</body>
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script>
+
+var setID = window.location.hash.substr(1);
+
+var apiURL="http://localhost:9090/api/"
+
+d3.json(apiURL + "sets/" + setID, function(error, data) {
+
+    var Set = d3.select("#set").append("div").selectAll(".div")
+        .data(data)
+        .enter()
+        .append("span")
+        .style("margin", "5px")
+        .style("display", "inline-block");
+    
+    Set
+        .append("img")
+        .attr("class", "link")
+        .attr("src", function(d) { return "download/img/sets/" + d.id + ".jpg"; });
+    
+    Set
+        .append("div")
+        .attr("class", "set")
+        .html(function(d) { return d.descr + " : " + d.t1 + " : " + d.year; });
+
+    // get pieces
+    d3.json(apiURL + "setPieces/set/" + setID, function(error, dataP) {
+
+        var Pieces = d3.select("#pieces").append("div").selectAll(".div")
+            .data(dataP)
+            .enter()
+            .append("div")
+            .style("margin", "5px")
+            .style("display", "inline-block");
+        
+        Pieces
+            .append("img")
+            .attr("class", "link")
+            .attr("src", function(d) { return "download/img/parts/" + d.color + "/" + d.piece_id + ".png"; });
+        
+    });
+    
+});
+
+</script>
+</html>
+
