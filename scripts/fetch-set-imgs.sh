@@ -15,25 +15,18 @@ SDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 source "${SDIR}/utils.sh"
 
-DOWNLOADS_URL="http://rebrickable.com/downloads"
-DOWNLOADS_FILE_NAME="downloads.html"
-BASE_PART_IMG_URL="http://rebrickable.com/img/pieces/"
-REGEX="parts_[0-9][0-9]*.zip"
+BASE_SET_IMG_URL="http://rebrickable.com/img/sets-b/"
 
-downloadFromURL "${DOWNLOADS_URL}" "${DOWNLOADS_FILE_NAME}"
-extractAllStringsFromFileMatchingRegex "EXTRACTED_DOWNLOAD_URLS" "${DOWNLOADS_FILE_NAME}" "${REGEX}"
+mkdir -p sets
+pushd sets
 
-mkdir parts
-pushd parts
-
-TMP_ZIP="temp.zip"
-for DL_FILE in ${EXTRACTED_DOWNLOAD_URLS}; do
-    echo "${DL_FILE}"
-    DOWNLOAD_URL="${BASE_PART_IMG_URL}${DL_FILE}"
-
-    downloadFromURL "${DOWNLOAD_URL}" "${TMP_ZIP}"
-    extractZip "${TMP_ZIP}"
-done
+while read l; do
+    S_ID_P=$( echo "${l}" | grep -o '^[^,]*,')
+    S_ID=${S_ID_P::-1}
+    DL_URL="${BASE_SET_IMG_URL}${S_ID}.jpg"
+    echo "Attempting download from = $DL_URL"
+    wget "${DL_URL}" || true
+done < "${SETS_FILE}"
 
 popd
 
