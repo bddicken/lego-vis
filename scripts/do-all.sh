@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 #
 # Consolidte images into a single dir
@@ -25,8 +25,8 @@ ${SDIR}/fetch-data.sh
 popd
 
 pushd img
-${SDIR}/fetch-img.sh
-#${SDIR}/consolidate-img.sh
+${SDIR}/fetch-part-imgs.sh
+${SDIR}/fetch-set-imgs.sh ../data/sets.csv
 popd
 
 ${SDIR}/gen-static-page.sh

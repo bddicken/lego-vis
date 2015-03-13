@@ -8,9 +8,6 @@
 set -o errexit
 set -o nounset
 
-# First arg is sets file
-SETS_FILE=$(realpath $1)
-
 SDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 source "${SDIR}/utils.sh"
