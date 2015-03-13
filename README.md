@@ -25,7 +25,7 @@ content it is serving, go to `http://localhost:8000` in your web-browser.
 
 Setting up the server requires several steps. First and foremost, you must have `nodejs`, `npm` 
 (Node Package Manager), and `mongodb` installed on your system. Once youve done so, go through 
-the following steps to get the server up-and-running:
+the following steps to get the server up-and-running on you rlocal machine.
 
 - `cd` into `server/`
 - Run `npm install` (installs all node library dependencies)
@@ -41,3 +41,5 @@ the following steps to get the server up-and-running:
 
 - Start the server by running `nodejs server.js`.
 
+Once you've done all this, navigate to `http://localhost:8000` in your web-browser, and you
+should see the website.
