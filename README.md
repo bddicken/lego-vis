@@ -1,5 +1,16 @@
 Lego data visualizer.
 
+## Dependencies
+
+- git
+- nodejs
+- npm
+- mongodb
+- realpath (Linux only)
+- python
+
+Install all of these onto your system before proceeding.
+
 ## Scripts
 
 To download all of the data needed for this project, run the following:
@@ -8,8 +19,9 @@ To download all of the data needed for this project, run the following:
 cd scripts/
 ./do-all.sh
 ```
-This will create a directory called `scriipts/downloads/`, in which residesl all of the csv data
-and images needed for this web application. Note that this works on linux systems only. This scipt 
+
+This will create a directory called `scriipts/downloads/`, in which resides all of the csv data
+and images needed for this web application. Note that this works on linux systems only. This script 
 downloads a _lot_ of images, and could take up to 2-3 hours. Only run this if you can copy the data 
 from someone else (Ben!). 
 
@@ -24,11 +36,11 @@ content it is serving, go to `http://localhost:8000` in your web-browser.
 ## Server
 
 Setting up the server requires several steps. First and foremost, you must have `nodejs`, `npm` 
-(Node Package Manager), and `mongodb` installed on your system. Once youve done so, go through 
-the following steps to get the server up-and-running on you rlocal machine.
+(Node Package Manager), and `mongodb` installed on your system. Once you've done so, go through 
+the following steps to get the server up-and-running on your local machine.
 
 - `cd` into `server/`
-- Run `npm install` (installs all node library dependencies)
+- Run `npm install` (installs all nodejs library dependencies)
 - Ensure that mongodb is running on your system. If it is not already running on your system, 
   open up a new terminal and run `mongod &` (for linux). 
 - Load all of the lego data using the following command:
@@ -37,7 +49,7 @@ the following steps to get the server up-and-running on you rlocal machine.
   nodejs load_data.js -s ../client/download/data/sets.csv -p ../client/download/data/pieces.csv -c ../client/download/data/colors.csv -e ../client/download/data/set_pieces.csv
   ```
 
-  Once the script is finished processing all the data, exit.
+  Typically, this takes several minutes. Once the script is finished processing all the data, exit.
 
 - Start the server by running `nodejs server.js`.
 
