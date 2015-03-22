@@ -20,122 +20,143 @@ mongoose.connect(dbConnectString);
 
 program
   .version('0.0.1')
-  .option('-s, --sets <fileName>',       'sets')
-  .option('-p, --pieces <fileName>',     'pieces')
-  .option('-c, --colors <fileName>',     'colors')
-  .option('-e, --setPieces <fileName>', 'set pieces')
+  .option('-s, --set <fileName>',       'set')
+  .option('-p, --piece <fileName>',     'piece')
+  .option('-c, --color <fileName>',     'color')
+  .option('-e, --setPiece <fileName>', 'set piece')
   .parse(process.argv);
 
-console.log('event file:');
 if (
-    !program.sets      ||
-    !program.pieces    ||
-    !program.colors    ||
-    !program.setPieces
+    !program.set      ||
+    !program.piece    ||
+    !program.color    ||
+    !program.setPiece
    ) {
     console.log("must specify all arguments.");
+}
+
+var fileCount = 4;
+var checkFinished = function(rowCount, rowType) {
+    if (rowCount == 0) {
+        console.log("Done processing " + rowType + " elements.");
+        fileCount--;
+    }
+    if (fileCount == 0) {
+        console.log("Done processing all Files. Exiting.");
+        process.exit(code=0);
+    }
 }
 
 ////
 //// Sets
 ////
 
-var setIO = readline.createInterface({
-    input: fs.createReadStream(program.sets),
-    output: process.stdout,
-    terminal: false
-});
-
-setIO.on('close', function(line) {
-    console.log("Done processing sets"); 
-});
-
-setIO.on('line', function(line) {
-    raw = line.split(',');
-    
+var setStream = fs.createReadStream(program.set);
+var setCount = 1;
+var setCSVStream = csv()
+.on('end', function(line) {
+    console.log("Done processing set"); 
+    setCount--;
+    checkFinished(setCount, "Set");
+})
+.on('data', function(line) {
+    setCount++;
     var set = new Set(); 
-    set.id = raw[0];
-    set.year   = raw[1];
-    set.peices = raw[2];
-    set.t1     = raw[3];
-    set.descr  = raw[4];
-
-    set.save(function(err) { if (err) { console.log('FAILED -> ' + err); } });
+    set.id     = line[0];
+    set.year   = line[1];
+    set.peices = line[2];
+    set.t1     = line[3];
+    set.descr  = line[4];
+    set.save(function(err) { 
+        if (err) { console.log('FAILED -> ' + err); }
+        setCount--;
+        checkFinished(setCount, "Set");
+    });
 });
+setStream.pipe(setCSVStream);
 
 ////
-//// setPieces
+//// setPeices
 ////
 
-var setPieceIO = readline.createInterface({
-    input: fs.createReadStream(program.setPieces),
-    output: process.stdout,
-    terminal: false
-});
-
-setPieceIO.on('close', function(line) {
-    console.log("Done processing setPieces"); 
-});
-
-setPieceIO.on('line', function(line) {
-    raw = line.split(',');
-    
+var setPieceStream = fs.createReadStream(program.setPiece);
+var setPieceCount = 1;
+var setPieceCSVStream = csv()
+.on('end', function(line) {
+    console.log("Done processing setPiece"); 
+    setPieceCount--;
+    checkFinished(setPieceCount, "SetPiece");
+})
+.on('data', function(line) {
+    setPieceCount++;
     var setPiece = new SetPiece(); 
-    setPiece.set_id   = raw[0];
-    setPiece.piece_id = raw[1];
-    setPiece.num      = raw[2];
-    setPiece.color    = raw[3];
-    setPiece.type     = raw[4];
-
-    setPiece.save(function(err) { if (err) { console.log('FAILED -> ' + err); } });
+    setPiece.set_id   = line[0];
+    setPiece.piece_id = line[1];
+    setPiece.num      = line[2];
+    setPiece.color    = line[3];
+    setPiece.type     = line[4];
+    setPiece.save(function(err) { 
+        if (err) { console.log('FAILED -> ' + err); }
+        setPieceCount--;
+        checkFinished(setPieceCount, "SetPiece");
+    });
 });
+setPieceStream.pipe(setPieceCSVStream);
 
 ////
-//// Pieces
+//// peices
 ////
 
-var pieceIO = readline.createInterface({
-    input: fs.createReadStream(program.pieces),
-    output: process.stdout,
-    terminal: false
-});
-
-pieceIO.on('close', function(line) {
-    console.log("Done processing pieces"); 
-});
-
-pieceIO.on('line', function(line) {
-    raw = line.split(',');
-    
+var pieceStream = fs.createReadStream(program.piece);
+var pieceCount = 1;
+var pieceCSVStream = csv()
+.on('end', function(line) {
+    console.log("Done processing piece"); 
+    pieceCount--;
+    checkFinished(pieceCount, "piece");
+})
+.on('data', function(line) {
+    pieceCount++;
     var piece = new Piece(); 
-    piece.id       = raw[0];
-    piece.descr    = raw[1];
-    piece.category = raw[2];
-
-    piece.save(function(err) { if (err) { console.log('FAILED -> ' + err); } });
+    piece.id       = line[0];
+    piece.descr    = line[1];
+    piece.category = line[2];
+    piece.save(function(err) { 
+        if (err) { console.log('FAILED -> ' + err); }
+        pieceCount--;
+        checkFinished(pieceCount, "Piece");
+    });
 });
+pieceStream.pipe(pieceCSVStream);
 
 ////
-//// Colors
+//// color
 ////
 
-var colorIO = readline.createInterface({
-    input: fs.createReadStream(program.colors),
-    output: process.stdout,
-    terminal: false
-});
-
-colorIO.on('close', function(line) {
-    console.log("Done processing colors"); 
-});
-
-colorIO.on('line', function(line) {
-    raw = line.split(',');
-    
+var colorStream = fs.createReadStream(program.color);
+var colorCount = 1;
+var colorCSVStream = csv()
+.on('end', function(line) {
+    console.log("Done processing color"); 
+    colorCount--;
+    checkFinished(colorCount, "Color");
+})
+.on('data', function(line) {
+    colorCount++;
     var color = new Color(); 
-    color.id    = raw[0];
-    color.descr = raw[1];
-
-    color.save(function(err) { if (err) { console.log('FAILED -> ' + err); } });
+    color.id    = line[0];
+    color.descr = line[1];
+    color.save(function(err) { 
+        if (err) { console.log('FAILED -> ' + err); }
+        colorCount--;
+        checkFinished(colorCount, "Color");
+    });
 });
+colorStream.pipe(colorCSVStream);
+
+
+
+
+
+
 
