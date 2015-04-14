@@ -52,7 +52,141 @@ router.get('/', function(req, res) {
     res.json({ message: 'hooray! welcome to the api!' });   
 });
 
+var getMapOnKey = function(data, keyKey, valKey) {
+    map = {};
+    for (var i in data) {
+        var datum = data[i];
+        if ( !(datum[keyKey] in map) ) {
+            map[datum[keyKey]] = [];
+        }
+        map[datum[keyKey]].push(datum[valKey]);
+    }
+    return map;
+}
+                
+
 // All routes here
+
+router.route('/setPieces/num/')
+.get(function(req, res) {
+    var sQ = Set.find().limit(maxReturn);
+    var pQ = Piece.find().limit(maxReturn)
+    var spQ = SetPiece.find().limit(maxReturn)
+
+    sQ.exec(function(err, ss) {
+        if (err) { res.send(err); }
+        spQ.exec(function(err, sps) {
+            if (err) { res.send(err); }
+            pQ.exec(function(err, ps) {
+                if (err) { res.send(err); }
+            
+                sp_map = getMapOnKey(sps, 'set_id', 'piece_id');
+                p_map = getMapOnKey(ps, 'id', 'descr');
+
+                var descs = {};
+                var descs_tokens = {};
+                var tokens = {};
+
+                // populate "descs" with map of set_id -> description string
+                for (var i in ss) {
+                    var sid = ss[i].id;
+                    if(sid in sp_map) {
+                        var pida = sp_map[sid];
+                        for (var j in pida) {
+                            var pid = pida[j];
+                            //console.log( "  b = " + pid);
+                            //console.log( "  c = " + p_map[pid]);
+                            if(pid in p_map) {
+                                //console.log("p_map[pid] = " + p_map[pid]);
+                                if( !(sid in descs) ) { descs[sid] = ''; }
+                                descs[sid] += ' ' + p_map[pid];
+                            }
+                        }
+                    }
+                    descs[sid] += ' ' + ss[i].t1;
+                }
+                
+                // populate "descs_tokens" with map of set_id -> description tokens
+                for (var i in descs) {
+                    
+                    var tokens = descs[i].split(/([_\W])/);
+                    var unique_tokens = tokens.filter(function(elem, pos) {
+                        return tokens.indexOf(elem) == pos;
+                    });
+                    //console.log("ut = " + unique_tokens);
+                    descs_tokens[i] = unique_tokens;
+                }
+                //console.log("count = " + Object.keys(descs_tokens).length)
+                res.json(descs_tokens);
+            });
+        });
+    });
+});
+
+
+router.route('/pieces/num/')
+.get(function(req, res) {
+    var pieceQ = Set.find().limit(maxReturn)
+    pieceQ.exec(function(err, pieces) {
+        if (err) { res.send(err); }
+
+        var map = {};
+
+        for (var i in pieces) {
+            var p = pieces[i];
+            if (pieces[i] == null) { console.log("err"); continue; }
+            var t = p.descr.split(/([_\W])/);
+            for (var j in t) {
+                 var key = t[j].toLowerCase();
+                if(map[key] == null)
+                    map[key] = 1;
+                else
+                    map[key]++;
+            }
+        }
+
+        for (var i in map) {
+            //if (map[i] < 5 || map[i] > 10)
+            if (map[i] < 50)
+                delete map[i];
+        }
+
+        var result = {};
+        var keys = Object.keys(map);
+        //console.log("keys  = " + keys);
+
+        result['words'] = [];
+        result['vecs'] = [];
+
+        //console.log("res = " + JSON.stringify(result));
+
+        var counter = 0;
+        for (var i in pieces) {
+            
+            var p = pieces[i];
+            var t = p.descr.split(/([_\W])/);
+            
+            var tm = {};
+            for (var j in t) { tm[t[j]] = 0; } // initialize tm
+            console.log("tm  = " + JSON.stringify(tm));
+            
+            var vector = [];
+
+            for (var k in keys) {
+                if (keys[k] in tm) { vector.push(9); }
+                else { vector.push(1); }
+
+            }
+            
+            result['words'].push(p.descr + "_" + counter);
+            result['vecs'].push(vector);
+
+            if (counter++ > 500) break;
+        }
+
+        res.json(result);
+    });
+});
 
 router.route('/pieces/:id')
 .get(function(req, res) {
