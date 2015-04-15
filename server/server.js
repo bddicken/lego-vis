@@ -80,12 +80,13 @@ router.route('/setPieces/num/')
             pQ.exec(function(err, ps) {
                 if (err) { res.send(err); }
             
+                s_map = getMapOnKey(ss, 'id', 'descr');
                 sp_map = getMapOnKey(sps, 'set_id', 'piece_id');
                 p_map = getMapOnKey(ps, 'id', 'descr');
 
                 var descs = {};
                 var descs_tokens = {};
-                var tokens = {};
+                var all_tokens = {};
 
                 // populate "descs" with map of set_id -> description string
                 for (var i in ss) {
@@ -113,11 +114,49 @@ router.route('/setPieces/num/')
                     var unique_tokens = tokens.filter(function(elem, pos) {
                         return tokens.indexOf(elem) == pos;
                     });
-                    //console.log("ut = " + unique_tokens);
                     descs_tokens[i] = unique_tokens;
+
+                    // update token counts
+                    for (var i in unique_tokens) {
+                        var t = unique_tokens[i];
+                        if (!(t in all_tokens)) { all_tokens[t] = 0; }
+                        all_tokens[t]++;
+                    }
                 }
-                //console.log("count = " + Object.keys(descs_tokens).length)
-                res.json(descs_tokens);
+
+                // Remove elements below threshold
+                for (var i in all_tokens) {
+                    if (all_tokens[i] < 50)
+                        delete all_tokens[i];
+                }
+        
+                var result = {};
+                result['words'] = [];
+                result['vecs'] = [];
+                var keys = Object.keys(all_tokens);
+
+                var counter = 0;
+                for (var i in descs_tokens) {
+                    
+                    var t = descs_tokens[i]; 
+                    var tm = {};
+                    for (var j in t) { tm[t[j]] = 0; };
+                    
+                    var vector = [];
+
+                    for (var k in keys) {
+                        if (keys[k] in tm) { vector.push(99); }
+                        else { vector.push(10); }
+                    }
+                    
+                    result['words'].push(s_map[i] + "_" + counter);
+                    result['vecs'].push(vector);
+
+                    if (counter++ > 2000) break;
+                }
+                
+                //console.log("t = " + result)
+                res.json(result);
             });
         });
     });
