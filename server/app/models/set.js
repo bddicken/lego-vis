@@ -4,7 +4,7 @@ var Schema       = mongoose.Schema;
 var SetSchema   = new Schema({
     id: String,
     year: Number,
-    peices: Number,
+    pieces: Number,
     t1: String,
     descr: String,
 });

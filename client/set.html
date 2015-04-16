@@ -28,7 +28,7 @@ d3.json(apiURL + "sets/" + setID, function(error, data) {
     Set
         .append("img")
         .attr("class", "link")
-        .attr("src", function(d) { return "download/img/sets/" + d.id + ".jpg"; });
+        .attr("src", function(d) { return "/download/img/sets/" + d.id + ".jpg"; });
     
     Set
         .append("div")
