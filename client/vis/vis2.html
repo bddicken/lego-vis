@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+<head></head>
+<body></body>
+
+<script src="../js/d3.v3.js"></script>
+<script src="../js/lego-data.js"></script>
+<script src="../js/jquery-1.8.3.min.js"></script>
+<script>
+
+var legoData = initLegoData('..')
+
+var appendScatterplot = function (xGetter, yGetter) {
+
+    var data = legoData.setsArray();
+
+    var margin = {top: 20, right: 15, bottom: 60, left: 60}, 
+        width = 500 - margin.left - margin.right, 
+        height = 500 - margin.top - margin.bottom;
+
+    var x = d3.scale.linear()
+        .domain([d3.min(data, function(d) { return xGetter(d); }), 
+                 d3.max(data, function(d) { return xGetter(d); })])
+        .range([ 0, width ]);
+
+    var y = d3.scale.linear()
+        .domain([d3.min(data, function(d) { return yGetter(d); }), 
+                 d3.max(data, function(d) { return yGetter(d); }) ])
+        .range([height, 0 ]);
+
+    var chart = d3.select('body')
+        .append('svg:svg')
+        .attr('width', width + margin.right + margin.left)
+        .attr('height', height + margin.top + margin.bottom)
+        .attr('class', 'chart')
+
+    var main = chart.append('g')
+    .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
+            .attr('width', width)
+            .attr('height', height)
+            .attr('class', 'main')   
+
+    // draw the x axis
+    var xAxis = d3.svg.axis()
+        .scale(x)
+        .orient('bottom')
+        .ticks(6);
+
+    main.append('g')
+    .attr('transform', 'translate(0,' + height + ')')
+        .attr('class', 'main axis date')
+        .call(xAxis);
+
+    // draw the y axis
+    var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient('left')
+    .ticks(6);
+
+    main.append('g')
+    .attr('transform', 'translate(0,0)')
+    .attr('class', 'main axis date')
+    .call(yAxis);
+
+    var g = main.append("svg:g"); 
+
+    g.selectAll("scatter-dots")
+    .data(data)
+    .enter().append("svg:circle")
+    .attr("cx", function (d) { return x(xGetter(d)); } )
+    .attr("cy", function (d) { return y(yGetter(d)); } )
+    .attr("fill", '#559')
+    .attr("opacity", 0.5)
+    .attr("r", 3);
+}
+
+legoData.onDataLoad = function() {
+    
+    console.log("custom function!");
+
+    appendScatterplot(
+            function(d) { return d.year; },
+            function(d) { return d.pieces; });
+    
+    appendScatterplot(
+            function(d) { return d.year; },
+            function(d) { return d.t1.length; });
+    
+    appendScatterplot(
+            function(d) { return d.year; },
+            function(d) { return d.descr.length; });
+};
+
+legoData.loadAllData();
+
+</script>
+</html>
+
