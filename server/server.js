@@ -1,7 +1,5 @@
 // server.js
 //
-// TODO: disable delete requests for production
-//
 
 // BASE SETUP
 // =============================================================================
