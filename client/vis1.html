@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+<head></head>
+<body></body>
+
+<div id="plot" style="border:solid;border-width:1px;border-color:black;"></div>
+
+<script src="d3.v3.js"></script>
+<script src="tsne.js"></script>
+<script src="jquery-1.8.3.min.js"></script>
+
+<script>
+
+var apiURL="http://localhost:9090/api/"
+
+var container = d3.select("body").append("div");
+
+appendVectorGraph = function(
+        containerSelection, data, dimension, totalWidth, totalHeight) {
+    var opt = {epsilon: 20, perplexity: 20};
+    var T = new tsnejs.tSNE(opt); // create a tSNE instance
+    var Y;
+    var stepNum = 0;
+    var tx=0, ty=0;
+    var ss=1;
+    var stepMax = 1000;
+    
+    var margin = {top: 10, right: 10, bottom: 10, left: 10};
+    var width = totalWidth 
+    var height = totalHeight 
+    
+    var x = d3.scale.linear()
+        .domain([0, width])
+        .range([0, width]);
+    var y = d3.scale.linear()
+        .domain([0, height])
+        .range([height, 0]);
+    
+    var brushCell;
+
+    var brushstart = function(p) {
+        if (brushCell !== this) {
+            d3.select(brushCell).call(brush.clear());
+            //x.domain([200,width]);
+            //y.domain([200,height]);
+            brushCell = this;
+        }
+    }
+
+    var players = [];
+
+    var brushmove = function(p) {
+        var e = brush.extent();
+        var b00 = e[0][0]; 
+        var b01 = e[0][1];
+        var b10 = e[1][0];
+        var b11 = e[1][1];
+        players = [];
+        svg.selectAll("circle").classed("hidden", function(d, i) {
+            var xp = ((Y[i][0]*20*ss + tx) + 400);
+            var yp = ((Y[i][1]*20*ss + ty) + 400) * (-1) + height;
+            var value = b00 > xp || xp > b10
+                || b01 > yp || yp > b11;
+            if (!value) { players.push(d); };
+            return value;
+        });
+    }
+
+    var brushend = function(p) {
+        if (brush.empty()) svg.selectAll(".hidden").classed("hidden", false);
+        //console.log("players = " + JSON.stringify(players));
+        /*
+        updateSecondaryGraph("#secondary-Shot", "Shot", {}, JSON.stringify(players));
+        updateSecondaryGraph("#secondary-TO", "TO", {}, JSON.stringify(players));
+        updateSecondaryGraph("#secondary-Reb", "Reb", {}, JSON.stringify(players));
+        updateSecondaryGraph("#secondary-Assist", "Assist", {}, JSON.stringify(players));
+        updateSecondaryGraph("#secondary-Foul", "Foul", {}, JSON.stringify(players));
+        updateSecondaryGraph("#secondary-FT", "FT", {}, JSON.stringify(players));
+        */
+    }
+
+    var brush = d3.svg.brush()
+        .x(x)
+        .y(y)
+        .on("brushstart", brushstart)
+        .on("brush", brushmove)
+        .on("brushend", brushend);
+
+    var updateEmbedding = function() {
+      var Y = T.getSolution();
+      console.log("Y = " + Y);
+
+      // TODO: cleanup circle/text pairing
+      var datapoints = svg.selectAll('circle')
+          .data(data.words)
+          .attr("cx",
+              function(d,i) { 
+                //console.log("d = " + d + "  " + Y[i][0] + " "  + ss + " " + tx);
+                return ((Y[i][0]*20*ss + tx) + 400);
+              })
+          .attr("cy",
+              function(d,i) { 
+                return ((Y[i][1]*20*ss + ty) + 400);
+              });
+              /*
+      var datapoints = svg.selectAll('text')
+          .data(data.words)
+          .attr("x",
+              function(d,i) { 
+                return ((Y[i][0]*20*ss + tx) + 400) + 6;
+              })
+          .attr("y",
+              function(d,i) { 
+                //console.log("d = " + JSON.stringify(d));
+                //console.log("yi = " + JSON.stringify(Y[i]));
+                //console.log("yii = " + Y[i][1]);
+                return ((Y[i][1]*20*ss + ty) + 400) + 6;
+              });
+              */
+    }
+
+    var zoomHandler = function() {
+        console.log("zh");
+        tx = d3.event.translate[0];
+        ty = d3.event.translate[1];
+        ss = d3.event.scale;
+        updateEmbedding();
+    }
+
+    var step = function() {
+        if (stepNum++ > stepMax) { return; }
+        var cost = T.step(); 
+        updateEmbedding();
+    }
+
+    T.initDataRaw(data.vecs); // init embedding
+    setInterval(step, 0);
+
+    // get min and max in each column of Y
+    var Y = T.Y;
+      console.log("Yt = " + Y);
+    
+    var svg = containerSelection.append("svg") // svg is global
+        .style("display", "inline")
+        .attr("width", width)
+        .attr("height", height);
+    
+    var containerGroup = svg
+        .append("g")
+        .attr("class", "cont");
+
+    var g = containerGroup.selectAll(".b")
+        .data(data.words)
+        .enter().append("g")
+        .attr("class", "u");
+
+    g.append("circle")
+        .attr("fill", function(d) { return "red" })
+        .attr("r", "6px");
+    g.append("text")
+        .attr("text-anchor", "top")
+        .attr("font-size", 12)
+        .text(function(d) { return d; });
+
+    var zoomListener = d3.behavior.zoom()
+        .scaleExtent([0.1, 10])
+        .center([0,0])
+        .on("zoom", zoomHandler);
+    
+    brushend(null);
+    
+    zoomListener(svg);
+
+    var zoomMode = true;
+
+    // Toggle zooming and brushing with "t"
+    document.onkeypress = function (e) {
+        e = e || window.event;
+        console.log(e.keyCode);
+        if (e.keyCode == 116) {
+            if (zoomMode) {
+              tzl = d3.behavior.zoom()
+                  .scaleExtent([0.1, 10])
+                  .center([0,0])
+                  .on("zoom", undefined);
+              tzl(svg);
+              containerGroup
+                .append("g")
+                .attr("class", "brush")
+                .call(brush);
+            }
+            else {
+                containerGroup.select(".brush").remove();
+                zoomListener(svg);
+            }
+            zoomMode = !zoomMode;
+        }
+    };
+}
+
+d3.json(apiURL + "setPieces/num/", function(error, data) {
+    //console.log(JSON.stringify(data));
+    //console.log("helooo!")
+    var allSets = d3.select("#plot");
+    appendVectorGraph(allSets, data, "dim", 1000, 800);
+});
+
+</script>
+</html>
+
