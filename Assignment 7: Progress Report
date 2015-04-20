@@ -1,0 +1,77 @@
+
+%
+% CSC 544 Assignment 7
+% 
+% @author Benjamin Dicken
+% @author Rachel Baumann
+%
+
+
+\documentclass[a4paper, 11pt]{article}
+\usepackage{comment} % enables the use of multi-line comments (\ifx \fi) 
+\usepackage{fullpage} % changes the margin
+
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{mathtools}
+\usepackage{hyperref}
+\usepackage{latexsym}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{amstext}
+\usepackage{multicol}
+\usepackage{amsxtra} 
+\usepackage[margin=0.7in]{geometry}
+\usepackage{algorithm2e}
+\usepackage{framed}
+\usepackage{booktabs}
+
+
+\title{CSc 544 Assignment 7}
+\author{Benjamin Dicken and Rachel Baumann}
+
+\begin{document}
+\maketitle
+\noindent
+
+\section*{The Dataset}
+
+%Description of the data set we're using goes here...
+%
+%colors.csv
+%pieces.csv
+%sets.csv
+%set\_pieces.csv
+%
+%images:
+%parts
+%sets
+
+We are using a dataset from \href{http://rebrickable.com/}{Rebrickable.com} on the inventories of every official LEGO set up to 2015. This dataset includes 9,992 lego sets, 21,089 unique pieces in 130 colors, with a total of 479,751 pieces between all sets. This dataset also includes images of 9,457 of the sets and most of the pieces. All data for the sets, pieces, colors, and maps between the pieces and sets are stored in csv files and the images are jpeg files. We have the following information in the fours csv files:
+
+\begin{enumerate}
+
+\item {\bf Sets:} Includes an ID for each set, the year a set was released, the total number of pieces in a set, and a category and brief description for each set. \\
+
+\item {\bf Pieces:} Includes an ID, category and brief description for each piece.
+
+\item {\bf Set Pieces:} Includes a set and piece ID, the number of times the piece is used in the set, the color of the piece in the set, and whether the piece is a normal or spare piece.
+
+
+\item {\bf Colors:} Includes an ID and a brief description for each color.
+
+\end{enumerate}
+
+
+
+\section*{Investigation of the Dataset and Results}
+
+What have we done so far. Working with and cleaning data. Ideas explored, progress made, interesting findings goes here...
+
+\section*{Project Goal for Visualization}
+
+What are we currently working on, description of our plans for the final visualization. How we intend to present an overview of the dataset, and how we intend to provide zooming, filtering, and details on demand.
+
+\end{document}
