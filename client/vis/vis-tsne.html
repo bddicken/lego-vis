@@ -1,7 +1,17 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <html>
-<head></head>
+<head>
+
+<style>
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+</style>
+
+</head>
 <body>
 
 <div id="plot" style="border:solid;border-width:1px;border-color:black;"></div>
@@ -14,105 +24,6 @@
 <script src="../js/tsne.js"></script>
 <script>
 
-var getMapOnKey = function(data, keyKey, valKey) {
-    map = {};
-    for (var i in data) {
-        var datum = data[i];
-        if ( !(datum[keyKey] in map) ) {
-            map[datum[keyKey]] = [];
-        }
-        map[datum[keyKey]].push(datum[valKey]);
-    }
-    return map;
-}
-
-
-/**
- * Clean this mess up!
- */
-var getTSNEInitialGraph = function () {
-    
-    var ss = legoData.setsArray();
-    var sps = legoData.setPiecesArray();
-    var ps = legoData.piecesArray();
-
-    var s_map = getMapOnKey(ss, 'set_id', 'descr');
-    var sp_map = getMapOnKey(sps, 'set_id', 'piece_id');
-    var p_map = getMapOnKey(ps, 'piece_id', 'descr');
-
-    var descs = {};
-    var descs_tokens = {};
-    var all_tokens = {};
-    
-    var result = {};
-    result['words'] = [];
-    result['vecs'] = [];
-
-    // populate "descs" with map of set_id -> description string
-    for (var i in ss) {
-        var sid = ss[i].set_id;
-        if(sid in sp_map) {
-            var pida = sp_map[sid];
-            for (var j in pida) {
-                var pid = pida[j];
-                if(pid in p_map) {
-                    if( !(sid in descs) ) { descs[sid] = ''; }
-                    descs[sid] += ' ' + p_map[pid];
-                }
-            }
-        }
-        descs[sid] += ' ' + ss[i].t1;
-    }
-
-    // populate "descs_tokens" with map of set_id -> description tokens
-    for (var i in descs) {
-        
-        var tokens = descs[i].split(/([_\W])/);
-        var unique_tokens = tokens.filter(function(elem, pos) {
-            return tokens.indexOf(elem) == pos;
-        });
-        descs_tokens[i] = unique_tokens;
-
-        // update token counts
-        for (var i in unique_tokens) {
-            var t = unique_tokens[i];
-            if (!(t in all_tokens)) { all_tokens[t] = 0; }
-            all_tokens[t]++;
-        }
-    }
-
-    // Remove elements below threshold
-    for (var i in all_tokens) {
-        if (all_tokens[i] < 80)
-            delete all_tokens[i];
-    }
-
-    var keys = Object.keys(all_tokens);
-    var counter = 0;
-
-    for (var i in descs_tokens) {
-        
-        var t = descs_tokens[i]; 
-        var tm = {};
-        var vector = [];
-        
-        for (var j in t) { tm[t[j]] = 0; };
-        
-
-        for (var k in keys) {
-            if (keys[k] in tm) { vector.push(99); }
-            else { vector.push(10); }
-        }
-        
-        result['words'].push(legoData.sets[i]);
-        result['vecs'].push(vector);
-
-        if (counter++ > 500) break;
-    }
-    
-    return result;
-}
-
 var container = d3.select("body").append("div");
 
 appendVectorGraph = function(
@@ -122,7 +33,6 @@ appendVectorGraph = function(
 
     var opt = {epsilon: 20, perplexity: 20};
     var T = new tsnejs.tSNE(opt); // create a tSNE instance
-    var Y;
     var stepNum = 0;
     var tx=0, ty=0;
     var ss=1;
@@ -158,8 +68,8 @@ appendVectorGraph = function(
         var b11 = e[1][1];
         players = [];
         svg.selectAll("circle").classed("hidden", function(d, i) {
-            var xp = ((Y[i][0]*20*ss + tx) + 400);
-            var yp = ((Y[i][1]*20*ss + ty) + 400) * (-1) + height;
+            var xp = ((data.output[i][0]*20*ss + tx) + 400);
+            var yp = ((data.output[i][1]*20*ss + ty) + 400) * (-1) + height;
             var value = b00 > xp || xp > b10
                 || b01 > yp || yp > b11;
             if (!value) { players.push(d); };
@@ -180,16 +90,15 @@ appendVectorGraph = function(
         .on("brushend", brushend);
 
     var getCategories = function() {
-        var Y = T.getSolution();
         var cats = {};
         var index = 0;
-        for (var i in data.words) {
-            var set = data.words[i];
+        for (var i in data.input.words) {
+            var set = data.input.words[i];
             if ( !(set.t1 in cats)) {
                 cats[set.t1] = {t1:'', x:0, y:0, cx:0, cy:0};
             }
-            var x = ((Y[i][0]*20*ss + tx) + 400) + 6;
-            var y = ((Y[i][1]*20*ss + ty) + 400) + 6;
+            var x = ((data.output[i][0]*20*ss + tx) + 400) + 6;
+            var y = ((data.output[i][1]*20*ss + ty) + 400) + 6;
             cats[set.t1].t1 = set.t1; 
             cats[set.t1].x += x; 
             cats[set.t1].y += y; 
@@ -204,18 +113,15 @@ appendVectorGraph = function(
     var displayGroups = function() {
       var catsa = getCategories();
       
-      svg.selectAll(".set-descr").remove();
       svg.selectAll(".set-t1").remove();
       
       svg.selectAll("set-t1")
         .data(catsa).enter().append("text")
         .attr("class", "set-t1")
-        .attr("font-size", 22)
+        .attr("font-size", 18)
         .attr("text-anchor", "top")
-        .style("fill", "#555")
+        .style("fill", "OrangeRed")
         .style("font-weight", "bold")
-        .style("stroke", "#000")
-        .style("stroke-width", "1px")
         .style("opacity", 1.0)
         .text(function(d) { return d.t1; })
         .attr("x", function(d) { 
@@ -229,30 +135,26 @@ appendVectorGraph = function(
     }
 
     var updateEmbedding = function(show_text) {
-      var Y = T.getSolution();
-      //console.log("Y = " + Y);
 
       // TODO: cleanup circle/text pairing
       var datapoints = svg.selectAll("circle")
-          .data(data.words)
+          .data(data.input.words)
           .attr("cx",
               function(d,i) { 
-                //console.log("d = " + d + "  " + Y[i][0] + " "  + ss + " " + tx);
-                return ((Y[i][0]*20*ss + tx) + 400);
+                return ((data.output[i][0]*20*ss + tx) + 400);
               })
           .attr("cy",
               function(d,i) { 
-                return ((Y[i][1]*20*ss + ty) + 400);
+                return ((data.output[i][1]*20*ss + ty) + 400);
               });
 
       if (show_text) {
-          displayGroups();
           
           svg.selectAll(".set-descr").remove();
           
           // show set names
           svg.selectAll("text")
-            .data(data.words)
+            .data(data.input.words)
             .enter()
             .append("text")
             .attr("class", "set-descr")
@@ -262,13 +164,16 @@ appendVectorGraph = function(
             .style("opacity", 1.0)
             .text(function(d) { return d.descr; })
             .attr("x", function(d,i) { 
-                return ((Y[i][0]*20*ss + tx) + 400) + 6;
+                return ((data.output[i][0]*20*ss + tx) + 400) + 6;
             })
             .attr("y", function(d,i) { 
-                return ((Y[i][1]*20*ss + ty) + 400) + 6;
+                return ((data.output[i][1]*20*ss + ty) + 400) + 6;
             });
+          
+            displayGroups();
 
       } else {
+          svg.selectAll(".set-descr").remove();
           displayGroups();
       }
     }
@@ -280,21 +185,6 @@ appendVectorGraph = function(
         ss = d3.event.scale;
         updateEmbedding(ss > 2);
     }
-
-    var step = function() {
-        if (stepNum++ >= stepMax) { 
-          updateEmbedding();
-          return -1; 
-        }
-        var cost = T.step(); 
-        return 1;
-    }
-
-    T.initDataRaw(data.vecs); // init embedding
-    //setInterval(step, 0);
-
-    // get min and max in each column of Y
-    var Y = T.Y;
     
     var svg = containerSelection.append("svg") // svg is global
         .style("display", "inline")
@@ -306,7 +196,7 @@ appendVectorGraph = function(
         .attr("class", "cont");
 
     var g = containerGroup.selectAll(".b")
-        .data(data.words)
+        .data(data.input.words)
         .enter().append("g")
         .attr("class", "u");
 
@@ -354,15 +244,14 @@ appendVectorGraph = function(
         }
     };
 
-    while(step() != -1) {} 
+    updateEmbedding();
 }
 
 var legoData = initLegoData('..')
 legoData.onDataLoad = function() {
     console.log("custom function!");
-    var data = getTSNEInitialGraph();
     var allSets = d3.select("#plot");
-    appendVectorGraph(allSets, data, "dim", 1000, 800);
+    appendVectorGraph(allSets, legoData.tsne, "dim", 1000, 800);
 };
 legoData.loadAllData();
 
