@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+<head></head>
+<body>
+
+<div id="plot" style="border:solid;border-width:1px;border-color:black;"></div>
+
+</body>
+
+<script src="../js/d3.v3.js"></script>
+<script src="../js/lego-data.js"></script>
+<script src="../js/jquery-1.8.3.min.js"></script>
+<script src="../js/tsne.js"></script>
+<script>
+
+var getMapOnKey = function(data, keyKey, valKey) {
+    map = {};
+    for (var i in data) {
+        var datum = data[i];
+        if ( !(datum[keyKey] in map) ) {
+            map[datum[keyKey]] = [];
+        }
+        map[datum[keyKey]].push(datum[valKey]);
+    }
+    return map;
+}
+
+
+/**
+ * Clean this mess up!
+ */
+var getTSNEInitialGraph = function () {
+    
+    var ss = legoData.setsArray();
+    var sps = legoData.setPiecesArray();
+    console.log(sps);
+    var ps = legoData.piecesArray();
+
+    var s_map = getMapOnKey(ss, 'set_id', 'descr');
+    var sp_map = getMapOnKey(sps, 'set_id', 'piece_id');
+    var p_map = getMapOnKey(ps, 'piece_id', 'descr');
+
+    var descs = {};
+    var descs_tokens = {};
+    var all_tokens = {};
+
+    // populate "descs" with map of set_id -> description string
+    for (var i in ss) {
+        var sid = ss[i].set_id;
+        if(sid in sp_map) {
+            var pida = sp_map[sid];
+            //console.log("pida = " + pida);
+            for (var j in pida) {
+                var pid = pida[j];
+                //console.log( "  b = " + pid);
+                //console.log( "  c = " + p_map[pid]);
+                if(pid in p_map) {
+                    //console.log("p_map[pid] = " + p_map[pid]);
+                    if( !(sid in descs) ) { descs[sid] = ''; }
+                    descs[sid] += ' ' + p_map[pid];
+                }
+            }
+        }
+        descs[sid] += ' ' + ss[i].t1;
+    }
+    
+    //console.log("descs = " + JSON.stringify(descs));
+
+    // populate "descs_tokens" with map of set_id -> description tokens
+    for (var i in descs) {
+        
+        var tokens = descs[i].split(/([_\W])/);
+        var unique_tokens = tokens.filter(function(elem, pos) {
+            return tokens.indexOf(elem) == pos;
+        });
+        descs_tokens[i] = unique_tokens;
+
+        // update token counts
+        for (var i in unique_tokens) {
+            var t = unique_tokens[i];
+            if (!(t in all_tokens)) { all_tokens[t] = 0; }
+            all_tokens[t]++;
+        }
+    }
+
+    // Remove elements below threshold
+    for (var i in all_tokens) {
+        if (all_tokens[i] < 80)
+            delete all_tokens[i];
+    }
+
+    var result = {};
+    result['words'] = [];
+    result['vecs'] = [];
+    var keys = Object.keys(all_tokens);
+
+    var counter = 0;
+    for (var i in descs_tokens) {
+        
+        var t = descs_tokens[i]; 
+        var tm = {};
+        for (var j in t) { tm[t[j]] = 0; };
+        
+        var vector = [];
+
+        for (var k in keys) {
+            if (keys[k] in tm) { vector.push(99); }
+            else { vector.push(10); }
+        }
+        
+        //result['words'].push(s_map[i] + "_" + counter);
+        result['words'].push(legoData.sets[i]);
+        result['vecs'].push(vector);
+
+        if (counter++ > 500) break;
+    }
+    
+    //console.log("t = " + JSON.stringify(result));
+    return result;
+}
+
+var container = d3.select("body").append("div");
+
+appendVectorGraph = function(
+        containerSelection, data, dimension, totalWidth, totalHeight) {
+    var opt = {epsilon: 20, perplexity: 20};
+    var T = new tsnejs.tSNE(opt); // create a tSNE instance
+    var Y;
+    var stepNum = 0;
+    var tx=0, ty=0;
+    var ss=1;
+    var stepMax = 200;
+    
+    var margin = {top: 10, right: 10, bottom: 10, left: 10};
+    var width = totalWidth 
+    var height = totalHeight 
+    
+    var x = d3.scale.linear()
+        .domain([0, width])
+        .range([0, width]);
+    var y = d3.scale.linear()
+        .domain([0, height])
+        .range([height, 0]);
+    
+    var brushCell;
+
+    var brushstart = function(p) {
+        if (brushCell !== this) {
+            d3.select(brushCell).call(brush.clear());
+            //x.domain([200,width]);
+            //y.domain([200,height]);
+            brushCell = this;
+        }
+    }
+
+    var players = [];
+
+    var brushmove = function(p) {
+        var e = brush.extent();
+        var b00 = e[0][0]; 
+        var b01 = e[0][1];
+        var b10 = e[1][0];
+        var b11 = e[1][1];
+        players = [];
+        svg.selectAll("circle").classed("hidden", function(d, i) {
+            var xp = ((Y[i][0]*20*ss + tx) + 400);
+            var yp = ((Y[i][1]*20*ss + ty) + 400) * (-1) + height;
+            var value = b00 > xp || xp > b10
+                || b01 > yp || yp > b11;
+            if (!value) { players.push(d); };
+            return value;
+        });
+    }
+
+    var brushend = function(p) {
+        if (brush.empty()) svg.selectAll(".hidden").classed("hidden", false);
+        //console.log("players = " + JSON.stringify(players));
+    }
+
+    var brush = d3.svg.brush()
+        .x(x)
+        .y(y)
+        .on("brushstart", brushstart)
+        .on("brush", brushmove)
+        .on("brushend", brushend);
+
+    var updateEmbedding = function(show_text) {
+      var Y = T.getSolution();
+      //console.log("Y = " + Y);
+
+      // TODO: cleanup circle/text pairing
+      var datapoints = svg.selectAll("circle")
+          .data(data.words)
+          .attr("cx",
+              function(d,i) { 
+                //console.log("d = " + d + "  " + Y[i][0] + " "  + ss + " " + tx);
+                return ((Y[i][0]*20*ss + tx) + 400);
+              })
+          .attr("cy",
+              function(d,i) { 
+                return ((Y[i][1]*20*ss + ty) + 400);
+              });
+      if (show_text) {
+          // show set names
+          svg.selectAll("text")
+            .data(data.words)
+            .attr("text-anchor", "top")
+            .attr("font-size", 12)
+            .style("opacity", 1.0)
+            .text(function(d) { return d.descr; })
+              .attr("x", function(d,i) { 
+                    return ((Y[i][0]*20*ss + tx) + 400) + 6;
+              })
+              .attr("y", function(d,i) { 
+                    return ((Y[i][1]*20*ss + ty) + 400) + 6;
+              });
+          // hide categories
+          svg.selectAll('text').style("opacity", 0.0);
+      } else {
+          // hide set names
+          svg.selectAll('text').style("opacity", 0.0);
+
+          // show categories
+          var cats = {};
+          var index = 0;
+          for (var i in data.words) {
+              var set = data.words[i];
+              if ( !(set.t1 in cats)) {
+                  cats[set.t1] = {t1:'', x:0, y:0, cx:0, cy:0};
+              }
+              var x = ((Y[i][0]*20*ss + ty) + 400) + 6;
+              var y = ((Y[i][1]*20*ss + ty) + 400) + 6;
+              cats[set.t1].t1 = set.t1; 
+              cats[set.t1].x += x; 
+              cats[set.t1].y += y; 
+              cats[set.t1].cx++; 
+              cats[set.t1].cy++; 
+              index++;
+          }
+          
+          //for (var i in cats) { for (var j in cats[i]) { console.log(j + " " + cats[i][j]); }}
+          
+          svg.selectAll("text")
+            .data(cats).enter().append("text")
+            .attr("text-anchor", "top")
+            .attr("font-size", 12)
+            .style("opacity", 1.0)
+            .text(function(d) { return d.t1; })
+              .attr("x", function(d) { 
+                    return d.x / d.cx;
+              })
+              .attr("y", function(d) { 
+                    return d.y / d.cy;
+              });
+
+          //console.log("cats = " + JSON.textify(cats));
+      }
+    }
+
+    var zoomHandler = function() {
+        console.log("zh");
+        tx = d3.event.translate[0];
+        ty = d3.event.translate[1];
+        ss = d3.event.scale;
+        updateEmbedding(ss > 2);
+    }
+
+    var step = function() {
+        if (stepNum++ == stepMax) { 
+          updateEmbedding();
+          return; 
+        }
+        var cost = T.step(); 
+    }
+
+    T.initDataRaw(data.vecs); // init embedding
+    setInterval(step, 0);
+
+    // get min and max in each column of Y
+    var Y = T.Y;
+    
+    var svg = containerSelection.append("svg") // svg is global
+        .style("display", "inline")
+        .attr("width", width)
+        .attr("height", height);
+    
+    var containerGroup = svg
+        .append("g")
+        .attr("class", "cont");
+
+    var g = containerGroup.selectAll(".b")
+        .data(data.words)
+        .enter().append("g")
+        .attr("class", "u");
+
+    g.append("circle")
+        .attr("fill", function(d) { return "red" })
+        .attr("r", "6px");
+    g.append("text")
+        .attr("class", "set-descr")
+        .attr("text-anchor", "top")
+        .attr("font-size", 12)
+        .text(function(d) { return d.descr; });
+
+    var zoomListener = d3.behavior.zoom()
+        .scaleExtent([0.1, 10])
+        .center([0,0])
+        .on("zoom", zoomHandler);
+    
+    brushend(null);
+    
+    zoomListener(svg);
+
+    var zoomMode = true;
+
+    // Toggle zooming and brushing with "t"
+    document.onkeypress = function (e) {
+        e = e || window.event;
+        console.log(e.keyCode);
+        if (e.keyCode == 116) {
+            if (zoomMode) {
+              tzl = d3.behavior.zoom()
+                  .scaleExtent([0.1, 10])
+                  .center([0,0])
+                  .on("zoom", undefined);
+              tzl(svg);
+              containerGroup
+                .append("g")
+                .attr("class", "brush")
+                .call(brush);
+            }
+            else {
+                containerGroup.select(".brush").remove();
+                zoomListener(svg);
+            }
+            zoomMode = !zoomMode;
+        }
+    };
+}
+
+var legoData = initLegoData('..')
+legoData.onDataLoad = function() {
+    console.log("custom function!");
+    var data = getTSNEInitialGraph();
+    var allSets = d3.select("#plot");
+    appendVectorGraph(allSets, data, "dim", 1000, 800);
+};
+legoData.loadAllData();
+
+</script>
+</html>
+

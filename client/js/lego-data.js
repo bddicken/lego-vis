@@ -28,7 +28,13 @@ var initLegoData = (function(urlPath) {
 
     /* Returns array of all setPieces */
     legoData.setPiecesArray = function() {
-        return $.map(legoData.setPieces, function(v){ return v; });
+        var allSP = [];
+        for (var i in legoData.setPieces) {
+            for (var j in legoData.setPieces[i]) {
+                allSP.push(legoData.setPieces[i][j]);
+            }
+        }
+        return allSP;
     }
 
     /* Returns array of all colors */
