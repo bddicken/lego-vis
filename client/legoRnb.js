@@ -13,21 +13,6 @@ function color(count) {
     return "#" + s + s2 + s3;
 }
 
-function makeCharts(id, num, data, w, h, type, attrValues, styleValues){
-    var svg = d3.select("#"+id)
-	.append("svg")
-	.attr("width", w+"px")
-	.attr("height", h+"px")
-	.attr("id", id+num);
-
-    svg.selectAll(type)
-	.data(data)
-	.enter()
-	.append(type)
-	.attr(attrValues)
-	.style(styleValues);
-}
-
 
 var legoData = initLegoData(" ")
 
@@ -53,6 +38,16 @@ var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
         .attr('width', width + margin.right + margin.left)
         .attr('height', height + margin.top + margin.bottom)
         .attr('class', 'chart')
+
+    // add background to all svg elements so we can click on background    
+    chart.append("rect")
+	.attr("id", "background_click")
+	.attr("x",0)
+	.attr("y",0)
+	.attr("width",width+ margin.right + margin.left)
+	.attr("height",height+ margin.top + margin.bottom)
+	.attr("fill", "#FFFFFF");
+
 
     var main = chart.append('g')
     .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
@@ -112,6 +107,7 @@ var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
     g.selectAll("scatter-dots")
     .data(data)
     .enter().append("svg:circle")
+    .attr("id", function (d) { return "set"+d.set_id; } )
     .attr("cx", function (d) { return x(xGetter(d)); } )
     .attr("cy", function (d) { return y(yGetter(d)); } )
     .attr("fill", '#559')
@@ -123,37 +119,36 @@ legoData.onDataLoad = function() {
     
     console.log("custom function!");
     
-    var data = legoData.setsArray();
-
+    //var data = legoData.setsArray();
+    var data2 = createData();
+    
     appendScatterplot( 
- 	    data,
-            function(d) { return d.year; },
-            function(d) { return d.pieces; },
+ 	    data2,
+            function(d) { return d.setInfo.year; },
+            function(d) { return d.setInfo.pieces; },
 	    "Year", 
 	    "Number of Pieces in Set");
     
     appendScatterplot(  
-	    data,
-            function(d) { return d.year; },
-            function(d) { return d.t1.length; },
+	    data2,
+            function(d) { return d.setInfo.year; },
+            function(d) { return d.setInfo.t1.length; },
 	    "Year",
 	    "Length of Category Name");
     
     appendScatterplot(
-            data,
-	    function(d) { return d.year; },
-            function(d) { return d.descr.length; },
+            data2,
+	    function(d) { return d.setInfo.year; },
+            function(d) { return d.setInfo.descr.length; },
 	    "Year",
 	    "Length of Set Description");
     
     appendScatterplot(
-	    data,
-            function(d) { return d.descr.length; },
-            function(d) { return d.pieces; },
+	    data2,
+            function(d) { return d.setInfo.descr.length; },
+            function(d) { return d.setInfo.pieces; },
 	    "Length of Set Description",
 	    "Number of Pieces in Set");
-
-    var data2 = createData();
     
     appendScatterplot(
 	    data2,
@@ -197,9 +192,6 @@ legoData.onDataLoad = function() {
 	    "Number of Pieces in Set",
 	    "Average Piece Count");
 
-
-
-
     appendScatterplot(
 	    data2,
             function(d,i) { return d.setInfo.year; },
@@ -228,13 +220,152 @@ legoData.onDataLoad = function() {
 	    "Number of Most Color Pieces in Set",
 	    "Number of Most Type Pieces in Set");
 
+    appendScatterplot(
+	    data2,
+            function(d) { return d.mostPieceColor.colors.length; },
+            function(d) { return d.mostPieceColor.colorCount; },
+	    "Number of Most Colors in a Set",
+	    "Number of Most Color Pieces in Set");
+
+    appendScatterplot(
+	    data2,
+            function(d) { return d.setInfo.descr.length; },
+            function(d) { return d.avgPieceDescr;},
+	    "Length of Set Description",
+	    "Average Piece Description Length");
+
+    appendScatterplot(
+	    data2,
+            function(d) { return d.setInfo.year; },
+            function(d) { return d.avgPieceDescr; },
+	    "Year",
+	    "Average Piece Description Length");
+
+    appendScatterplot(
+	    data2,
+            function(d) { return d.setInfo.year; },
+            function(d) { return d.setInfo.descr.length/d.avgPieceDescr;  },
+	    "Year",
+	    "Ratio of Set Description Length to Average Piece Description Length");
+
+    appendScatterplot(
+	    data2,
+            function(d) { return d.setInfo.year; },
+            function(d) { return d.mostPieceColor.colors.length;  },
+	    "Year",
+	    "Number of Most Colors in a Set");
+
+    appendScatterplot(
+	    data2,
+            function(d) { return d.setInfo.year; },
+            function(d) { return d.mostPieceCat.cats.length },
+	    "Year",
+	    "Number of Most Categories");
+
+    appendScatterplot(
+	    data2,
+            function(d) { return d.setInfo.year; },
+            function(d) { return (d.mostPieceColor.colors[1]+1 >0) ? 
+		    Math.log2(d.mostPieceColor.colors[1]+1) : -1  },
+	    "Year",
+	    "First Most Color (log)");
+
+    appendScatterplot(
+	    data2, 
+            function(d) {return (d.mostPieceColor.colors[1]+1 >0) ? 
+		    Math.log2(d.mostPieceColor.colors[1]+1) : -1  },
+            function(d) { return d.setInfo.pieces; },
+	    "First Most Color (log)",
+	    "Number of Pieces in Set");
+
+
+
+
 
  //data[index] = {
 //		 setInfo: sets[i], 
-//		 setPieceInfo: pieces, 
+//		 setPieceInfo: pieces
+//
+//		      pieceDescr : (legoData.pieces[setPieces[j].piece_id] == undefined) ? 
+//			      '0' : legoData.pieces[setPieces[j].piece_id].descr,
+//		      pieceCategory :  (legoData.pieces[setPieces[j].piece_id] == undefined) ? 
+//			      '0' : legoData.pieces[setPieces[j].piece_id].category,
+//		      pieceId : setPieces[j].piece_id,
+//		      color : setPieces[j].color,
+//		      type : setPieces[j].type,
+//		      pieceCount : setPieces[j].num}
+//
+//		 avgPieceDescr: pieceDescr/ setPieces.length,
+//		 avgPieceCount: pieceCount/setPieces.length, 
+//		 mostPieceCat: {cats: e, catCount: maxCat, catPct: catPct},
 //		 avgPieceCount: pieceCount/setPieces.length, 
 //		 mostPieceType: {types: c, typeCount: maxType, typePct: typePct},
 //		 mostPieceColor: {colors: a, colorCount: maxColor, colorPct: colorPct}
+
+
+
+
+//Interactions
+
+
+    var svg = d3.selectAll("svg");
+    var node = svg.selectAll("circle");
+    var id = 0;
+    var path = node
+    .data(data2)
+    .enter().append("circle");
+   
+    // mousing over highlights a point
+    node.on("click", function(d,i){
+	 if( id != 0){
+	     d3.select("table").remove();
+	     d3.selectAll("#set"+id)  
+	    	.moveToBack()
+	    	.attr("fill", '#559')
+    	    	.attr("opacity", 0.5)
+     	    	.attr("r", 3);
+	 }
+	 id = d.set_id;
+ 	 d3.selectAll("#set"+id)
+	    .moveToFront()
+	    .attr("fill", 'red')
+    	    .attr("opacity", 1)
+     	    .attr("r", 6);
+       var setTable = tabulate(d,i);		
+    
+      });
+
+    // mousing out removes highlight
+    d3.selectAll("#background_click").on("click", function(d,i){
+	 // path.filter(function (thisData) { return d === thisData; })
+	    if( id != 0){
+	      d3.select("table").remove();
+	      d3.selectAll("#set"+id)  
+	    	.moveToBack()
+	    	.attr("fill", '#559')
+    	    	.attr("opacity", 0.5)
+     	    	.attr("r", 3);}
+    });
+
+	
+    
+    
+    d3.selection.prototype.moveToFront = function() {
+	return this.each(function(){
+	    this.parentNode.appendChild(this);
+	  });
+    };
+
+	
+    d3.selection.prototype.moveToBack = function() { 
+	 return this.each(function() { 
+		var firstChild = this.parentNode.firstChild; 
+		if (firstChild) { 
+		    this.parentNode.insertBefore(this, firstChild); 
+		} 
+	 }); 
+     };
+
 
 };
 
@@ -257,15 +388,27 @@ function createData(){
          var pieceCount = 0;
          var pieceTypes = [];
 	 var pieceColors = [];
-	 //var pieceCats = [];
-	 //var pieceDescr = [];
+	 var pieceCats = [];
+	 var pieceDescr = 0;
+	 var allPieceColor = [];
+	 var colorCount=[];
 
 	 if(setPieces != undefined){
 	   for (j=0; j< setPieces.length; j++){	
      		   pieceCount  = pieceCount + parseInt(setPieces[j].num);
 		   pieceTypes[j] = setPieces[j].type;
-		   pieceColors[j] = setPieces[j].color;
-
+	           pieceColors[j] = (isNaN(setPieces[j].color) || setPieces[j].color>2000) 
+			   ? -1 : setPieces[j].color;
+		   if (isNaN(setPieces[j].color));
+		   else{
+			  if (allPieceColor.indexOf(setPieces[j].color) ==-1) {
+			   allPieceColor.push(setPieces[j].color);
+			   colorCount[allPieceColor.indexOf(setPieces[j].color)] = parseInt(setPieces[j].num);
+		   
+			  }
+	   	   colorCount[allPieceColor.indexOf(setPieces[j].color)] += parseInt(setPieces[j].num);
+		   }	   
+	
 		   pieces[j]={
 		      pieceDescr : (legoData.pieces[setPieces[j].piece_id] == undefined) ? 
 			      '0' : legoData.pieces[setPieces[j].piece_id].descr,
@@ -275,38 +418,48 @@ function createData(){
 		      color : setPieces[j].color,
 		      type : setPieces[j].type,
 		      pieceCount : setPieces[j].num}
+		   
+		   pieceDescr = pieceDescr + pieces[j].pieceDescr.length;
+		   pieceCats[j] = pieces[j].pieceCategory;
 	   }
+	   
 	   pieceTypes = arrayMode(pieceTypes);
 	   pieceColors = arrayMode(pieceColors);
-	   
-	   var a = pieceColors[0], b = pieceColors[1];
+	   pieceCats = arrayMode(pieceCats);	
+
+	   var a = allPieceColor, b = colorCount;//pieceColors[0], b = pieceColors[1];
 	   var c = pieceTypes[0], d = pieceTypes[1];
+	   var e = pieceCats[0], f = pieceCats[1];
 	   
-	   var maxColor = d3.max(b);
-	   var colorPct = (100 * maxColor)/ setPieces.length;
+	   var maxColor = d3.max(colorCount);    //d3.max(b);
+	   var colorPct = (100 * maxColor)/ sets[i].pieces;
 	   var maxType = d3.max(d);
 	   var typePct = (100 * maxType)/setPieces.length;
+	   var maxCat = d3.max(f);
+	   var catPct = (100 * maxCat)/setPieces.length;
 	   
 	   a.filter( function(value){ return b[a.indexOf(value)]=maxColor; }); 
-	   c.filter( function(value){ return b[a.indexOf(value)]=maxType; }); 
-	
+	   c.filter( function(value){ return d[c.indexOf(value)]=maxType; }); 
+	   e.filter( function(value){ return f[e.indexOf(value)]=maxCat; }); 
 
-         data[index] = {
+           data[index] = {
+		 set_id : sets[i].set_id,
 		 setInfo: sets[i], 
 		 setPieceInfo: pieces, 
+		 avgPieceDescr: pieceDescr/ setPieces.length,
 		 avgPieceCount: pieceCount/setPieces.length, 
+		 mostPieceCat: {cats: e, catCount: maxCat, catPct: catPct},
 		 mostPieceType: {types: c, typeCount: maxType, typePct: typePct},
 		 mostPieceColor: {colors: a, colorCount: maxColor, colorPct: colorPct}
 	 };
 	 index++;
 	 }
     }
-    console.log(data[1]);    
     return data;
 
 }
 
-
+//function to find all max elements of two linked arrays
 function arrayMode(arr) {
     var a = [], b = [], prev;
 
@@ -325,160 +478,47 @@ function arrayMode(arr) {
 }
 
 
+    // The table generation function
+    function tabulate(d,i) {
+      var setData = [
+	["Set ID: ",  d.set_id ],
+	["Year Made: ", d.setInfo.year],      
+	["Category: ", d.setInfo.t1],
+	["Number of Pieces: ", d.setInfo.pieces],
+	["Number of Unique Pieces: " , d.setPieceInfo.length],
+	["Average Piece Description Length: ", d.avgPieceDescr.toFixed(2) ],
+	["Average Piece Count: ", d.avgPieceCount.toFixed(2)],
+	["Most Piece Categories: ",arrayString(d.mostPieceCat.cats)],
+	["Most Piece Category Percentage: ", d.mostPieceCat.catPct.toFixed(2)+"%"],
+        ["Most Piece Colors: ", arrayString(d.mostPieceColor.colors)],
+	["Most Piece Color Percentage: ", d.mostPieceColor.colorCount + " pieces " + d.mostPieceColor.colorPct.toFixed(2)+"%"],
+	["Most Piece Tyes: ", arrayString(d.mostPieceType.types)],
+	["Most Piece Type Percentage: ", d.mostPieceType.typePct.toFixed(2)+"%"]
+		];
 
+      var table = d3.select("body").append("table")
+   		.style("border", "2px black solid")
+		.selectAll("tr")
+        	.data(setData)
+	        .enter()
+ 	       	.append("tr")
+		.selectAll("td")
+		.data(function(d){return d;})
+		.enter()
+		.append("td")
+		.style("border", "1px black solid")
+    		//.style("padding", "5px")
+		.text(function(d){return d;
+		});
+    }
 
-
-
-
-
-
-
-
-
-
-
-
-//var container = d3.select("body").append("div");
-
-function doSomething() {
-//	var info =[];
-//	d3.json(apiURL + "setPieces/set/" + setObj.id, function(error, data){
-		//var unique = _.pluck(data, 'piece_id').sort();
-		//var avgCount = d3.sum(_.pluck(data, 'num')/data.length;
-		//descrSum = 0, descrMax, descrMin, mostCat, 
-		//var mostType = _.plick(data, 'type').sort();
-	        //var mostColor=_.pluck(data, 'color').sort();
-		//console.log(unique); 
-//		var count = 0; var type =[]; var typeCount=[]
-//		console.log(JSON.stringify(data)); //console.log(mostType); console.log(mostColor);
-//		var color =[]; var colorCount=[];
-//		for (i = 0; i< data.length; i++) {
-//		count = count + data[i].num;
-//		index1 = color.indexOf(data[i].color);
-//		//console.log(color.indexOf(data[i].color));
-//		if (index1 == -1) {	
-//			color.push(data[i].color);
-//			colorCount[color.indexOf(data[i].color)]=1;}
-//		else{ colorCount[index]++};
-//	
-//		index = type.indexOf(data[i].type);
-//		//console.log(type.indexOf(data[i].type));
-//		if (index == -1) {	
-//			type.push(data[i].type);
-//			typeCount[type.indexOf(data[i].type)]=1;}
-//		else{ typeCount[index]++};
-//		}
-//		
-//		//console.log(type); console.log(typeCount);
-//	info = {setID : setObj.id, year : setObj.year, numPieces : setObj.pieces, setCategory : setObj.t1, setDescr : setObj.descr, uniquePieces: data.length , avgPieceCount : count/data.length};
-		//, mostPieceType :{type: type(typeCount.indexOf(d3.max(typeCount))), count: d3.max(typeCount)}};  
-	// , mostPieceColor : {color: color(colorCount.indexOf(d3.max(colorCount))), count: d3.max(colorCount) }};
-//console.log(info);
-//	pieceDescrAvg : , pieceDescrMax : , pieceDescrMin : , mostPieceCat : , d	
-
-
-var w = 450;
-var h = 450;
-var m = 50;
-d3.selectAll("svg").attr("width",w).attr("height",h); 
-
-
-var yearExtent = d3.extent(sets, function(row) { return row.year; });
-var piecesExtent = d3.extent(sets, function(row) { return row.pieces; });
-
-var xScaleYear = d3.scale.linear().domain(yearExtent).range([m, w-m]);
-var yScalePieces = d3.scale.linear().domain(piecesExtent).range([h-m, m]);
-
-var xAxisYear = d3.svg.axis().scale(xScaleYear);
-var yAxisPieces = d3.svg.axis().scale(yScalePieces);
-
-
-
-//var Extent = d3.extent(data, function(row) { return row.year; });
-var descrExtent = d3.extent(sets, function(row) { return row.descr.length; });
-var setPieceExtent = d3.extent(pieces, function(row){return row.descr.length;});
-var idPieceExtent = d3.extent(pieces, function(row, i){ return i;});
-//var pieceCountExtent = d3.extent(setPieces, function(row, i){return row.num;});
-var pieceDescrExtent = d3.extent(pieces, function(row, i){return row.descr.length});
-
-var xScalePieces = d3.scale.linear().domain(piecesExtent).range([m, w-m]);
-var yScaleDescr = d3.scale.linear().domain(descrExtent).range([h-m, m]);
-var xScaleDescr = d3.scale.linear().domain(descrExtent).range([m, w-m]);
-var yScalesetPiece = d3.scale.linear().domain(setPieceExtent).range([h-m,m]);
-var xScaleidPieces = d3.scale.linear().domain(idPieceExtent).range([m,w-m]);
-//var yScalePieceCount = d3.scale.linear().domain(pieceCountExtent).range([h-m, m]);
-var xScalePieceDescr = d3.scale.linear().domain(pieceDescrExtent).range([m,w-m]);
-
-var xAxisPieces = d3.svg.axis().scale(xScaleYear);
-var yAxisDescr = d3.svg.axis().scale(yScaleDescr);
-
-
-
-var attrValues={
-	cx: function(d){return xScaleYear(d.year);},
-	cy: function(d){ return yScalePieces(d.pieces);},
-	r: function(d){return 1;}};
-var styleValues={	
-	stroke: "blue",
-	fill: "blue"};
-
-var attrValues2={
-	cx: function(d){return xScaleYear(d.year);},
-	cy: function(d){ return yScaleDescr(d.descr.length);},
-	r: function(d){return 1;}};
-
-var attrValues3={
-	cx: function(d){ return xScaleDescr(d.descr.length);},
-	cy: function(d){return yScalePieces(d.pieces);},
-	r: function(d){return 1;}};
-
-var attrValues4={
-	cx: function(d,i){ return xScaleidPieces(i);},
-	cy: function(d){return yScalesetPiece(d.descr.length);},
-	r: function(d){return 1;}};
-
-
-var attrValues5={
-	cx: function(d){
-		return 1;},
-	cy: function(d){ return 100;},// yScalePieceCount(d.num);},
-	r: function(d){return 1;}};
-
-
-
-//function(d){ d3.json(apiURL + "setPieces/set/" + d.id , function(error, data) {
-    
-//  });
-
-
-//d3.select("body").select("p").data(data).enter().append("p").text(function(d){ return Object.keys(d);});
-
-// year versus number of pieces
-d3.select("body").append("div").attr("id", "chart1");
-
-makeCharts("chart1","1",sets, w,h, "circle", attrValues, styleValues);
-
-// year versus description length
-d3.select("body").append("div").attr("id", "chart2");
-
-makeCharts("chart2","2",sets, w,h, "circle", attrValues2, styleValues);
-
-// description length versus number of pieces
-d3.select("body").append("div").attr("id", "chart3");
-
-makeCharts("chart3","3",sets, w,h, "circle", attrValues3, styleValues);
-
-// 1-D index of piece versus pieces description length
-d3.select("body").append("div").attr("id", "chart4");
-
-makeCharts("chart4","4",pieces, w,h, "circle", attrValues4, styleValues);
-
-
-
-d3.select("body").append("div").attr("id", "chart5");
-
-makeCharts("chart5","5",sets, w,h, "circle", attrValues5, styleValues);
-
+function arrayString(aray){
+    var string = "";	   
+    for (i=0; i< aray.length; i++){
+	string = string + aray[i];
+	(i == aray.length-1) ?
+		string = string : string = string + ", ";
+    }
+    return string;
 }
-
 
