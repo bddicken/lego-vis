@@ -74,7 +74,14 @@ Downloading the data was a relatively straightforward process. All of the inform
 
 The next step was to explore the data, and ensure that it behaved as expected. We wrote a simple web interface to browse all of the sets, pieces, and the mapping between them. We discovered that most of the data was in-tact and well-organized, so it needed very little cleaning. The oly issue we ran into was a few missing piece and set images, but this was minor.
 
-Once we were confident that the data was clean, we began experimenting with a few basic visualization techniques. We started off by making many simple scatterplots to get a feel for the many dimentions of the data. After going through this process, we got a good feel for what we had, and what we didn't.
+Once we were confident that the data was clean, we began experimenting with a few basic visualization techniques. We started off by making many simple scatterplots to get a feel for the many dimentions of the data. After going through this process, we got a good feel for what we had, and what we didn't. See some scatterplots we tried in figure 1.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.8\textwidth]{img/scatterplots.png}
+\caption{Two of many scatterplots we experimented with.}
+
+\end{figure}
 
 We then decided to try plotting all of the LEGO sets onto a single plane, using the t-SNE algorithm. For the vector of similiarties, which t-SNE requires to be creatd for each node on the graph, we used a simple binary similarity function. First, we computed the set $t1$ of all the individual tokens in the descriptions of all the sets and pieces that occur more than $n$ amount of times (where $n$ is some threshold). Next we computed a set of description tokens for each lego set, using all the tokens found in the set's description and the description of all it's pieces. For each token $t$ in $si$, we add a number to the similarity vector. We add a 9 if $t \in$ the LEGO set's token set, and a $1$ if it does not. Each set, along with it's computed similarity vector, is passed along to the t-SNE algorithm and visualized.
 

@@ -34,7 +34,6 @@ var getTSNEInitialGraph = function () {
     
     var ss = legoData.setsArray();
     var sps = legoData.setPiecesArray();
-    console.log(sps);
     var ps = legoData.piecesArray();
 
     var s_map = getMapOnKey(ss, 'set_id', 'descr');
@@ -44,19 +43,19 @@ var getTSNEInitialGraph = function () {
     var descs = {};
     var descs_tokens = {};
     var all_tokens = {};
+    
+    var result = {};
+    result['words'] = [];
+    result['vecs'] = [];
 
     // populate "descs" with map of set_id -> description string
     for (var i in ss) {
         var sid = ss[i].set_id;
         if(sid in sp_map) {
             var pida = sp_map[sid];
-            //console.log("pida = " + pida);
             for (var j in pida) {
                 var pid = pida[j];
-                //console.log( "  b = " + pid);
-                //console.log( "  c = " + p_map[pid]);
                 if(pid in p_map) {
-                    //console.log("p_map[pid] = " + p_map[pid]);
                     if( !(sid in descs) ) { descs[sid] = ''; }
                     descs[sid] += ' ' + p_map[pid];
                 }
@@ -64,8 +63,6 @@ var getTSNEInitialGraph = function () {
         }
         descs[sid] += ' ' + ss[i].t1;
     }
-    
-    //console.log("descs = " + JSON.stringify(descs));
 
     // populate "descs_tokens" with map of set_id -> description tokens
     for (var i in descs) {
@@ -90,33 +87,29 @@ var getTSNEInitialGraph = function () {
             delete all_tokens[i];
     }
 
-    var result = {};
-    result['words'] = [];
-    result['vecs'] = [];
     var keys = Object.keys(all_tokens);
-
     var counter = 0;
+
     for (var i in descs_tokens) {
         
         var t = descs_tokens[i]; 
         var tm = {};
+        var vector = [];
+        
         for (var j in t) { tm[t[j]] = 0; };
         
-        var vector = [];
 
         for (var k in keys) {
             if (keys[k] in tm) { vector.push(99); }
             else { vector.push(10); }
         }
         
-        //result['words'].push(s_map[i] + "_" + counter);
         result['words'].push(legoData.sets[i]);
         result['vecs'].push(vector);
 
         if (counter++ > 500) break;
     }
     
-    //console.log("t = " + JSON.stringify(result));
     return result;
 }
 
@@ -124,6 +117,9 @@ var container = d3.select("body").append("div");
 
 appendVectorGraph = function(
         containerSelection, data, dimension, totalWidth, totalHeight) {
+
+    console.log("appending graph!");
+
     var opt = {epsilon: 20, perplexity: 20};
     var T = new tsnejs.tSNE(opt); // create a tSNE instance
     var Y;
@@ -148,8 +144,6 @@ appendVectorGraph = function(
     var brushstart = function(p) {
         if (brushCell !== this) {
             d3.select(brushCell).call(brush.clear());
-            //x.domain([200,width]);
-            //y.domain([200,height]);
             brushCell = this;
         }
     }
@@ -185,6 +179,55 @@ appendVectorGraph = function(
         .on("brush", brushmove)
         .on("brushend", brushend);
 
+    var getCategories = function() {
+        var Y = T.getSolution();
+        var cats = {};
+        var index = 0;
+        for (var i in data.words) {
+            var set = data.words[i];
+            if ( !(set.t1 in cats)) {
+                cats[set.t1] = {t1:'', x:0, y:0, cx:0, cy:0};
+            }
+            var x = ((Y[i][0]*20*ss + tx) + 400) + 6;
+            var y = ((Y[i][1]*20*ss + ty) + 400) + 6;
+            cats[set.t1].t1 = set.t1; 
+            cats[set.t1].x += x; 
+            cats[set.t1].y += y; 
+            cats[set.t1].cx++; 
+            cats[set.t1].cy++; 
+            index++;
+        }
+        var catsa = $.map(cats, function(v) { return v; });
+        return catsa;
+    }
+
+    var displayGroups = function() {
+      var catsa = getCategories();
+      
+      svg.selectAll(".set-descr").remove();
+      svg.selectAll(".set-t1").remove();
+      
+      svg.selectAll("set-t1")
+        .data(catsa).enter().append("text")
+        .attr("class", "set-t1")
+        .attr("font-size", 22)
+        .attr("text-anchor", "top")
+        .style("fill", "#555")
+        .style("font-weight", "bold")
+        .style("stroke", "#000")
+        .style("stroke-width", "1px")
+        .style("opacity", 1.0)
+        .text(function(d) { return d.t1; })
+        .attr("x", function(d) { 
+            console.log(d.x / d.cx);
+            return d.x / d.cx;
+        })
+        .attr("y", function(d) { 
+            console.log(d.y / d.cy);
+            return d.y / d.cy;
+        });
+    }
+
     var updateEmbedding = function(show_text) {
       var Y = T.getSolution();
       //console.log("Y = " + Y);
@@ -201,60 +244,32 @@ appendVectorGraph = function(
               function(d,i) { 
                 return ((Y[i][1]*20*ss + ty) + 400);
               });
+
       if (show_text) {
+          displayGroups();
+          
+          svg.selectAll(".set-descr").remove();
+          
           // show set names
           svg.selectAll("text")
             .data(data.words)
+            .enter()
+            .append("text")
+            .attr("class", "set-descr")
+            .attr("text-anchor", "top")
             .attr("text-anchor", "top")
             .attr("font-size", 12)
             .style("opacity", 1.0)
             .text(function(d) { return d.descr; })
-              .attr("x", function(d,i) { 
-                    return ((Y[i][0]*20*ss + tx) + 400) + 6;
-              })
-              .attr("y", function(d,i) { 
-                    return ((Y[i][1]*20*ss + ty) + 400) + 6;
-              });
-          // hide categories
-          svg.selectAll('text').style("opacity", 0.0);
+            .attr("x", function(d,i) { 
+                return ((Y[i][0]*20*ss + tx) + 400) + 6;
+            })
+            .attr("y", function(d,i) { 
+                return ((Y[i][1]*20*ss + ty) + 400) + 6;
+            });
+
       } else {
-          // hide set names
-          svg.selectAll('text').style("opacity", 0.0);
-
-          // show categories
-          var cats = {};
-          var index = 0;
-          for (var i in data.words) {
-              var set = data.words[i];
-              if ( !(set.t1 in cats)) {
-                  cats[set.t1] = {t1:'', x:0, y:0, cx:0, cy:0};
-              }
-              var x = ((Y[i][0]*20*ss + ty) + 400) + 6;
-              var y = ((Y[i][1]*20*ss + ty) + 400) + 6;
-              cats[set.t1].t1 = set.t1; 
-              cats[set.t1].x += x; 
-              cats[set.t1].y += y; 
-              cats[set.t1].cx++; 
-              cats[set.t1].cy++; 
-              index++;
-          }
-          
-          //for (var i in cats) { for (var j in cats[i]) { console.log(j + " " + cats[i][j]); }}
-          
-          svg.selectAll("text")
-            .data(cats).enter().append("text")
-            .attr("text-anchor", "top")
-            .attr("font-size", 12)
-            .style("opacity", 1.0)
-            .text(function(d) { return d.t1; })
-              .attr("x", function(d) { 
-                    return d.x / d.cx;
-              })
-              .attr("y", function(d) { 
-                    return d.y / d.cy;
-              });
-
-          //console.log("cats = " + JSON.textify(cats));
+          displayGroups();
       }
     }
 
@@ -267,15 +282,16 @@ appendVectorGraph = function(
     }
 
     var step = function() {
-        if (stepNum++ == stepMax) { 
+        if (stepNum++ >= stepMax) { 
           updateEmbedding();
-          return; 
+          return -1; 
         }
         var cost = T.step(); 
+        return 1;
     }
 
     T.initDataRaw(data.vecs); // init embedding
-    setInterval(step, 0);
+    //setInterval(step, 0);
 
     // get min and max in each column of Y
     var Y = T.Y;
@@ -295,7 +311,7 @@ appendVectorGraph = function(
         .attr("class", "u");
 
     g.append("circle")
-        .attr("fill", function(d) { return "red" })
+        .attr("fill", function(d) { return "SlateBlue" })
         .attr("r", "6px");
     g.append("text")
         .attr("class", "set-descr")
@@ -337,6 +353,8 @@ appendVectorGraph = function(
             zoomMode = !zoomMode;
         }
     };
+
+    while(step() != -1) {} 
 }
 
 var legoData = initLegoData('..')
