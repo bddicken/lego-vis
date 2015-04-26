@@ -183,7 +183,7 @@ appendVectorGraph = function(
         tx = d3.event.translate[0];
         ty = d3.event.translate[1];
         ss = d3.event.scale;
-        updateEmbedding(ss > 2);
+        updateEmbedding(ss > 4);
     }
     
     var svg = containerSelection.append("svg") // svg is global
@@ -201,6 +201,7 @@ appendVectorGraph = function(
         .attr("class", "u");
 
     g.append("circle")
+        .attr("class", function(d) { return "set" + d.id; })
         .attr("fill", function(d) { return "SlateBlue" })
         .attr("r", "6px");
     g.append("text")
@@ -218,31 +219,39 @@ appendVectorGraph = function(
     
     zoomListener(svg);
 
-    var zoomMode = true;
+    var zoomBrushMode = true;
+
+    var toggleZoomBrush = function() {
+        if (zoomBrushMode) {
+          tzl = d3.behavior.zoom()
+              .scaleExtent([0.1, 10])
+              .center([0,0])
+              .on("zoom", undefined);
+          tzl(svg);
+          containerGroup
+            .append("g")
+            .attr("class", "brush")
+            .call(brush);
+        }
+        else {
+            containerGroup.select(".brush").remove();
+            zoomListener(svg);
+        }
+        zoomBrushMode = !zoomBrushMode;
+        return !zoomBrushMode;
+    }
 
     // Toggle zooming and brushing with "t"
     document.onkeypress = function (e) {
         e = e || window.event;
         console.log(e.keyCode);
         if (e.keyCode == 116) {
-            if (zoomMode) {
-              tzl = d3.behavior.zoom()
-                  .scaleExtent([0.1, 10])
-                  .center([0,0])
-                  .on("zoom", undefined);
-              tzl(svg);
-              containerGroup
-                .append("g")
-                .attr("class", "brush")
-                .call(brush);
-            }
-            else {
-                containerGroup.select(".brush").remove();
-                zoomListener(svg);
-            }
-            zoomMode = !zoomMode;
+            toggleZoomBrush();
         }
     };
+
+    svg.append("text")
+        .on("click", function(d) { toggleBruthZoom(); });
 
     updateEmbedding();
 }
