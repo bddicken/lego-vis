@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+<head>
+
+<style>
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+</style>
+
+</head>
+<body>
+
+<div id="plot" style="border:solid;border-width:1px;border-color:black;"></div>
+
+</body>
+
+<script src="../js/d3.v3.js"></script>
+<script src="../js/lego-data.js"></script>
+<script src="../js/jquery-1.8.3.min.js"></script>
+<script src="../js/tsne.js"></script>
+<script>
+
+(function(console){
+
+    console.save = function(data, filename){
+
+        if(!data) {
+            console.error('Console.save: No data')
+            return;
+        }
+
+        if(!filename) filename = 'console.json'
+
+        if(typeof data === "object"){
+            data = JSON.stringify(data, undefined, 4)
+        }
+
+        var blob = new Blob([data], {type: 'text/json'}),
+        e    = document.createEvent('MouseEvents'),
+        a    = document.createElement('a')
+
+        a.download = filename
+        a.href = window.URL.createObjectURL(blob)
+        a.dataset.downloadurl =  ['text/json', a.download, a.href].join(':')
+        e.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null)
+        a.dispatchEvent(e)
+    }
+})(console)
+
+function download(filename, text) {
+    var pom = document.createElement('a');
+    pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    pom.setAttribute('download', filename);
+
+    pom.style.display = 'none';
+    document.body.appendChild(pom);
+
+    pom.click();
+
+    document.body.removeChild(pom);
+}
+
+var getTSNEInitialGraph = function () {
+  
+    var descs_tokens = {};
+    var all_tokens = {};
+    
+    var result = {};
+    result['words'] = [];
+    result['vecs'] = [];
+
+    // populate "descs" with map of set_id -> description string
+    for (var i in legoData.sets) {
+        var descr = "";
+        var sid = legoData.sets[i].set_id;
+        if(sid in legoData.setPieces) {
+            var spa = legoData.setPieces[sid];
+            for (var j in spa) {
+                var pid = spa[j].piece_id;
+                if(pid in legoData.pieces) {
+                    descr += ' ' + legoData.pieces[pid].descr; 
+                }
+            }
+        }
+        descr += ' ' + legoData.sets[i].t1;
+
+        // split tokens
+        var tokens = descr.split(/([_\W])/);
+        var unique_tokens = tokens.filter(function(elem, pos) {
+            return tokens.indexOf(elem) == pos;
+        });
+        descs_tokens[i] = unique_tokens;
+
+        // update token counts
+        for (var j in unique_tokens) {
+            var t = unique_tokens[j];
+            if (!(t in all_tokens)) { all_tokens[t] = 0; }
+            all_tokens[t]++;
+        }
+
+    }
+
+    // Remove elements below threshold
+    for (var i in all_tokens) {
+        if (all_tokens[i] < 80)
+            delete all_tokens[i];
+    }
+
+    var keys = Object.keys(all_tokens);
+    var counter = 0;
+
+    for (var i in descs_tokens) {
+        
+        var t = descs_tokens[i]; 
+        var tm = {};
+        var vector = [];
+        
+        for (var j in t) { tm[t[j]] = 0; };
+
+        for (var k in keys) {
+            if (keys[k] in tm) { vector.push(99); }
+            else { vector.push(10); }
+        }
+        
+        result['words'].push(legoData.sets[i]);
+        result['vecs'].push(vector);
+
+        if (counter++ > 1000) break;
+    }
+    
+    console.log("initial input computed.");
+    return result;
+}
+
+
+appendVectorGraph = function(data) {
+
+    console.log("beginning to compute graph");
+
+    var opt = {epsilon: 20, perplexity: 20};
+    var T = new tsnejs.tSNE(opt); // create a tSNE instance
+    var Y;
+    var stepNum = 0;
+    var stepMax = 200;
+    
+    T.initDataRaw(data.vecs); 
+    var Y = T.Y;
+
+    var counter = 0;
+    var step_looper = setInterval(
+        function() {
+            if (stepNum++ >= stepMax) { 
+              console.log("done!");
+              clearInterval(step_looper);
+              console.save({'output':Y, 'input':data}, 'tsnes.json')
+//              var text = JSON.stringify({'output':Y, 'input':data});
+//              download('tsne.json', text);
+            }
+            console.log("interval " + counter++);
+            var cost = T.step(); 
+        }, 0);
+}
+
+var legoData = initLegoData('..')
+legoData.onDataLoad = function() {
+    console.log("custom function!");
+    var data = getTSNEInitialGraph();
+    var allSets = d3.select("#plot");
+    appendVectorGraph(data);
+};
+legoData.loadAllData();
+
+</script>
+</html>
+

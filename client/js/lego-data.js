@@ -3,6 +3,9 @@
 var initLegoData = (function(urlPath) {
 
     var legoData = {};
+    
+    /* T-SNE layout information for all sets */
+    legoData.tsne = {};
    
     /* Map of set_id -> set object */
     legoData.sets = {};
@@ -44,7 +47,7 @@ var initLegoData = (function(urlPath) {
 
     legoData.urlPrefix = urlPath;
 
-    legoData.filesLeftToDownload = 4;
+    legoData.filesLeftToDownload = 5;
 
     legoData.checkIfDataIsLoaded = function() {
         if(--legoData.filesLeftToDownload <= 0) { legoData.onDataLoad(); }
@@ -84,7 +87,7 @@ var initLegoData = (function(urlPath) {
                 legoData.setPieces[data[i].set_id].push(data[i]);
             }
             console.log("done loading " + data.length + " SetPieces");
-            console.log("Created set_id->setPiece object map of size " + Object.keys(legoData.setPieces).length);
+            console.log("  Created set_id->setPiece object map of size " + Object.keys(legoData.setPieces).length);
             
             /*var j =100;
             for (var i in legoData.setPieces) {
@@ -92,6 +95,12 @@ var initLegoData = (function(urlPath) {
                 if (i == j) { break; }
             }*/
             
+            legoData.checkIfDataIsLoaded();
+        });
+        
+        d3.json(legoData.urlPrefix + "/download/data/tsne.json", function(data) {
+            legoData.tsne = data;
+            console.log("done loading set t-SNE data.");
             legoData.checkIfDataIsLoaded();
         });
     }
