@@ -1,17 +1,59 @@
-function toHex(v) {
-    var str = "00" + Math.floor(Math.max(0, Math.min(255, v))).toString(16);
-    return str.substr(str.length-2);
-}
 
-function rgb(r, g, b){
-    return "#" + toHex(r * 255) + toHex(g * 255) + toHex(b * 255);
-}
+var selected = [];
 
-function color(count) {
-    var amount = (2500 - count) / 2500 * 255;
-    var s = toHex(amount), s2 = toHex(amount / 2 + 127), s3 = toHex(amount / 2 + 127);
-    return "#" + s + s2 + s3;
-}
+function beginBrush(margin, width, height, xGetter, yGetter, x, y){
+var svg = d3.selectAll("svg");	
+var brush = d3.svg.brush()
+	.x(d3.scale.identity().domain([margin.left, width+ margin.left]))
+        .y(d3.scale.identity().domain([margin.bottom, height+margin.bottom]));
+	
+var brushCell;
+var node = svg.selectAll("circle");
+
+
+var brusher = svg.append("g")
+    	  	.attr("class", "brush")
+     		.call(brush
+        	.on("brushstart", brushstart)
+        	.on("brush", 
+		   function() {
+          	     var e = brush.extent();
+          	     node.classed("hidden", 
+	               function(d) {
+			       var p = d3.select(this);
+			 var xx = p.attr("cx");
+		         var yy = p.attr("cy");
+		         if ( e[0][0]-margin.left > x(xGetter(d))  || x(xGetter(d)) > e[1][0]-margin.left
+          			|| e[0][1]-margin.top >y(yGetter(d)) || y(yGetter(d)) > e[1][1]-margin.top){
+			       	//d3.selectAll("#"+ d3.select(this).attr("id")).attr("fill", '#559');
+			
+					return true;
+				}
+		 	else{ 	 
+				//selected.push(d3.select(this).attr("class"));
+				var point = document.getElementById("set"+ d.set_id);
+			     point.setAttribute("fill", "red");
+				//console.log(p.size());
+				return false;
+			}
+		       });
+
+		   })
+		.on("brushend", brushend));
+    
+    	function brushstart(){
+      	  if(brushCell !== this){
+          d3.select(brushCell).call(brush.clear());
+          brushCell = this;}}
+
+    	function brushend() {
+      	  if (brush.empty()==true){ svg.selectAll(".hidden").classed("hidden", false);
+		//original();
+		clicked = false;}}
+
+}	
+
+
 
 
 var legoData = initLegoData(" ")
@@ -38,6 +80,11 @@ var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
         .attr('width', width + margin.right + margin.left)
         .attr('height', height + margin.top + margin.bottom)
         .attr('class', 'chart')
+
+
+
+	beginBrush(margin, width, height, xGetter, yGetter, x, y);
+
 
     // add background to all svg elements so we can click on background    
     chart.append("rect")
@@ -107,7 +154,7 @@ var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
     g.selectAll("scatter-dots")
     .data(data)
     .enter().append("svg:circle")
-    .attr("id", function (d) { return "set"+d.set_id; } )
+    .attr("id", function (d) { return "set"+d.set_id.replace(/\./g, "-"); } )
     .attr("cx", function (d) { return x(xGetter(d)); } )
     .attr("cy", function (d) { return y(yGetter(d)); } )
     .attr("fill", '#559')
@@ -128,13 +175,6 @@ legoData.onDataLoad = function() {
             function(d) { return d.setInfo.pieces; },
 	    "Year", 
 	    "Number of Pieces in Set");
-    
-    appendScatterplot(  
-	    data2,
-            function(d) { return d.setInfo.year; },
-            function(d) { return d.setInfo.t1.length; },
-	    "Year",
-	    "Length of Category Name");
     
     appendScatterplot(
             data2,
@@ -167,34 +207,6 @@ legoData.onDataLoad = function() {
     appendScatterplot(
 	    data2,
             function(d,i) { return d.setInfo.year; },
-            function(d,i) { return d.mostPieceColor.colorPct; },
-	    "Year", 
-	    "Color Percentage");
-  
-    appendScatterplot(
-	    data2,
-            function(d) { return d.setInfo.pieces; },
-            function(d) { return d.mostPieceColor.colorCount; },
-	    "Number of Pieces in Set",
-	    "Number of Most Color Pieces in Set");
-
-    appendScatterplot(
-	    data2,
-            function(d,i) { return d.setInfo.year; },
-            function(d,i) { return d.avgPieceCount; },
-	    "Year", 
-	    "Average Piece Count");
-  
-    appendScatterplot(
-	    data2,
-            function(d) { return d.setInfo.pieces; },
-            function(d) { return d.avgPieceCount; },
-	    "Number of Pieces in Set",
-	    "Average Piece Count");
-
-    appendScatterplot(
-	    data2,
-            function(d,i) { return d.setInfo.year; },
             function(d,i) { return d.mostPieceType.typePct; },
 	    "Year", 
 	    "Type Percentage");
@@ -213,104 +225,13 @@ legoData.onDataLoad = function() {
 	    "Color Percentage", 
 	    "Type Percentage");
   
-    appendScatterplot(
-	    data2,
-            function(d) { return d.mostPieceColor.colorCount; },
-            function(d) { return d.mostPieceType.typeCount; },
-	    "Number of Most Color Pieces in Set",
-	    "Number of Most Type Pieces in Set");
-
-    appendScatterplot(
-	    data2,
-            function(d) { return d.mostPieceColor.colors.length; },
-            function(d) { return d.mostPieceColor.colorCount; },
-	    "Number of Most Colors in a Set",
-	    "Number of Most Color Pieces in Set");
-
-    appendScatterplot(
-	    data2,
-            function(d) { return d.setInfo.descr.length; },
-            function(d) { return d.avgPieceDescr;},
-	    "Length of Set Description",
-	    "Average Piece Description Length");
-
-    appendScatterplot(
-	    data2,
-            function(d) { return d.setInfo.year; },
-            function(d) { return d.avgPieceDescr; },
-	    "Year",
-	    "Average Piece Description Length");
-
-    appendScatterplot(
-	    data2,
-            function(d) { return d.setInfo.year; },
-            function(d) { return d.setInfo.descr.length/d.avgPieceDescr;  },
-	    "Year",
-	    "Ratio of Set Description Length to Average Piece Description Length");
-
-    appendScatterplot(
-	    data2,
-            function(d) { return d.setInfo.year; },
-            function(d) { return d.mostPieceColor.colors.length;  },
-	    "Year",
-	    "Number of Most Colors in a Set");
-
-    appendScatterplot(
-	    data2,
-            function(d) { return d.setInfo.year; },
-            function(d) { return d.mostPieceCat.cats.length },
-	    "Year",
-	    "Number of Most Categories");
-
-    appendScatterplot(
-	    data2,
-            function(d) { return d.setInfo.year; },
-            function(d) { return (d.mostPieceColor.colors[1]+1 >0) ? 
-		    Math.log2(d.mostPieceColor.colors[1]+1) : -1  },
-	    "Year",
-	    "First Most Color (log)");
-
-    appendScatterplot(
-	    data2, 
-            function(d) {return (d.mostPieceColor.colors[1]+1 >0) ? 
-		    Math.log2(d.mostPieceColor.colors[1]+1) : -1  },
-            function(d) { return d.setInfo.pieces; },
-	    "First Most Color (log)",
-	    "Number of Pieces in Set");
-
-
-
-
-
- //data[index] = {
-//		 setInfo: sets[i], 
-//		 setPieceInfo: pieces
-//
-//		      pieceDescr : (legoData.pieces[setPieces[j].piece_id] == undefined) ? 
-//			      '0' : legoData.pieces[setPieces[j].piece_id].descr,
-//		      pieceCategory :  (legoData.pieces[setPieces[j].piece_id] == undefined) ? 
-//			      '0' : legoData.pieces[setPieces[j].piece_id].category,
-//		      pieceId : setPieces[j].piece_id,
-//		      color : setPieces[j].color,
-//		      type : setPieces[j].type,
-//		      pieceCount : setPieces[j].num}
-//
-//		 avgPieceDescr: pieceDescr/ setPieces.length,
-//		 avgPieceCount: pieceCount/setPieces.length, 
-//		 mostPieceCat: {cats: e, catCount: maxCat, catPct: catPct},
-//		 avgPieceCount: pieceCount/setPieces.length, 
-//		 mostPieceType: {types: c, typeCount: maxType, typePct: typePct},
-//		 mostPieceColor: {colors: a, colorCount: maxColor, colorPct: colorPct}
-
-
-
 
 //Interactions
 
 
     var svg = d3.selectAll("svg");
-    var node = svg.selectAll("circle");
     var id = 0;
+    var node = svg.selectAll("circle");
     var path = node
     .data(data2)
     .enter().append("circle");
@@ -347,8 +268,6 @@ legoData.onDataLoad = function() {
      	    	.attr("r", 3);}
     });
 
-	
-    
     
     d3.selection.prototype.moveToFront = function() {
 	return this.each(function(){
@@ -403,7 +322,7 @@ function createData(){
 		   else{
 			  if (allPieceColor.indexOf(setPieces[j].color) ==-1) {
 			   allPieceColor.push(setPieces[j].color);
-			   colorCount[allPieceColor.indexOf(setPieces[j].color)] = parseInt(setPieces[j].num);
+			   colorCount.push(0);
 		   
 			  }
 	   	   colorCount[allPieceColor.indexOf(setPieces[j].color)] += parseInt(setPieces[j].num);
@@ -426,24 +345,31 @@ function createData(){
 	   pieceTypes = arrayMode(pieceTypes);
 	   pieceColors = arrayMode(pieceColors);
 	   pieceCats = arrayMode(pieceCats);	
-
+	   
 	   var a = allPieceColor, b = colorCount;//pieceColors[0], b = pieceColors[1];
 	   var c = pieceTypes[0], d = pieceTypes[1];
 	   var e = pieceCats[0], f = pieceCats[1];
-	   
+           var numSetPieces = d3.max([sets[i].pieces, pieceCount]);
+
 	   var maxColor = d3.max(colorCount);    //d3.max(b);
-	   var colorPct = (100 * maxColor)/ sets[i].pieces;
+	   var colorPct = (100 * maxColor)/ numSetPieces;
 	   var maxType = d3.max(d);
 	   var typePct = (100 * maxType)/setPieces.length;
 	   var maxCat = d3.max(f);
 	   var catPct = (100 * maxCat)/setPieces.length;
 	   
-	   a.filter( function(value){ return b[a.indexOf(value)]=maxColor; }); 
-	   c.filter( function(value){ return d[c.indexOf(value)]=maxType; }); 
-	   e.filter( function(value){ return f[e.indexOf(value)]=maxCat; }); 
+	   a=a.filter( function(value){ if (b[a.indexOf(value)]==maxColor) 
+		   	return true; 
+		   else return false; }); 
+	   c=c.filter( function(value){ if (d[c.indexOf(value)]==maxType) 
+		   	return true; 
+	   	   else return false; }); 
+	   e=e.filter( function(value){ if (f[e.indexOf(value)]==maxCat) 
+		   	return true; 
+		   else return false; }); 
 
            data[index] = {
-		 set_id : sets[i].set_id,
+		 set_id : sets[i].set_id.replace(/\./g,"-"),
 		 setInfo: sets[i], 
 		 setPieceInfo: pieces, 
 		 avgPieceDescr: pieceDescr/ setPieces.length,
