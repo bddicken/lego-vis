@@ -1,6 +1,6 @@
 var margin = {top: 20, right: 15, bottom: 60, left: 60}, 
-    width = 500 - margin.left - margin.right, 
-    height = 500 - margin.top - margin.bottom;
+    width = 400 - margin.left - margin.right, 
+    height = 400 - margin.top - margin.bottom;
 
 var brushCell;
 
@@ -23,22 +23,23 @@ function brushend() {
 }
            
 function brushed() {
-  d3.select(this.parentNode).selectAll("circle")
+  var e = brush.extent();
+  var e00 = e[0][0] - margin.left;
+  var e10 = e[1][0] - margin.left;
+  var e01 = e[0][1] - margin.top;
+  var e11 = e[1][1] - margin.top;
+  d3.selectAll("circle").attr("fill", '#559');
+  d3.select(this.parentNode)
+    .selectAll("circle")
     .classed("hidden", function(d) {
-        var e = brush.extent();
-        var p = d3.select(this);
+        var p = d3.select(this); // SLOW
         var x = p.attr("cx");
         var y = p.attr("cy");
-        var thisIdStr = "#" + d3.select(this).attr("id");
-        var notInBrushRange = e[0][0]-margin.left > x  || x > e[1][0]-margin.left
-                           || e[0][1]-margin.top > y   || y > e[1][1]-margin.top;
+        var notInBrushRange = e00 > x  || x > e10 || e01 > y  || y > e11;
         if (!notInBrushRange) {
-            d3.selectAll(thisIdStr).attr("fill", "red"); // SLOW!
-            return false;
-        } else { 
-            d3.selectAll(thisIdStr).attr("fill", '#559'); // SLOW!
-            return true;
-        }
+            d3.selectAll("#" + p.attr("id")).attr("fill", "red"); // SLOW
+        } 
+        return false;
     });
 }
 
@@ -110,6 +111,11 @@ var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
 	.attr("width",width+ margin.right + margin.left)
 	.attr("height",height+ margin.top + margin.bottom)
 	.attr("fill", "#FFFFFF");
+    
+    chart
+        .append("g")
+        .attr("class", "brush")
+        .call(brush);
 
 
     var main = chart.append('g')
@@ -184,7 +190,7 @@ legoData.onDataLoad = function() {
     
     //var data = legoData.setsArray();
     var data2 = createData();
-    
+	
     appendScatterplot( 
  	    data2,
             function(d) { return d.setInfo.year; },
@@ -240,12 +246,6 @@ legoData.onDataLoad = function() {
             function(d,i) { return d.mostPieceType.typePct; },
 	    "Color Percentage", 
 	    "Type Percentage");
-	
-    d3.selectAll(".chart")
-        .append("g")
-        .attr("class", "brush")
-        .call(brush);
-  
 
 //Interactions
 
@@ -270,7 +270,7 @@ legoData.onDataLoad = function() {
 	 id = d.set_id;
  	 d3.selectAll("#set"+id)
 	    .moveToFront()
-	    .attr("fill", 'red')
+	    .attr("fill", 'Lime')
     	    .attr("opacity", 1)
      	    .attr("r", 6);
        var setTable = tabulate(d,i);		
