@@ -1,6 +1,6 @@
-var margin = {top: 20, right: 15, bottom: 60, left: 60}, 
-    width = 400 - margin.left - margin.right, 
-    height = 400 - margin.top - margin.bottom;
+var margin = {top: 20, right: 15, bottom: 50, left: 50}, 
+    width = 350 - margin.left - margin.right, 
+    height = 350 - margin.top - margin.bottom;
 
 var brushCell;
 
@@ -88,7 +88,7 @@ var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
         .domain([ymin, ymax])
         .range([height, 0 ]);
     
-    var container = d3.select('body')
+    var container = d3.select('#scatterplots')
         .append('span');
     var containerP = 
         container.append('span');
@@ -97,6 +97,7 @@ var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
     var chart = 
         //d3.select('body')
         containerP.append('svg:svg')
+        .style("margin", "5px")
         .attr('width', width + margin.right + margin.left)
         .attr('height', height + margin.top + margin.bottom)
         .attr('class', 'chart')
@@ -117,7 +118,6 @@ var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
         .attr("class", "brush")
         .call(brush);
 
-
     var main = chart.append('g')
     .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
             .attr('width', width)
@@ -128,7 +128,7 @@ var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
     var xAxis = d3.svg.axis()
         .scale(x)
         .orient('bottom')
-        .ticks(6);
+        .ticks(5);
 
     var xAxisNodes = main.append('g')
         .attr('transform', 'translate(0,' + height + ')')
@@ -140,7 +140,7 @@ var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
 
     // x axis label	
     chart.append("text")
-        .attr("class", "x label")
+        .attr("class", "x axis-label label")
         .attr("text-anchor", "end")
         .attr("x", width + margin.left)
         .attr("y", height + margin.bottom)
@@ -151,7 +151,7 @@ var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
     var yAxis = d3.svg.axis()
     .scale(y)
     .orient('left')
-    .ticks(6);
+    .ticks(5);
 
     var yAxisNodes = main.append('g')
     .attr('transform', 'translate(0,0)')
@@ -163,7 +163,7 @@ var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
     
     // y axis label
     chart.append("text")
-        .attr("class", "y label")
+        .attr("class", "y axis-label label")
         .attr("text-anchor", "end")
         .attr("x", -margin.top)
 	.attr("y", 4)
@@ -180,7 +180,7 @@ var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
     .attr("cx", function (d) { return x(xGetter(d)); } )
     .attr("cy", function (d) { return y(yGetter(d)); } )
     .attr("fill", '#559')
-    .attr("opacity", 0.5)
+    .attr("opacity", 0.4)
     .attr("r", 3);
 }
 
@@ -264,7 +264,7 @@ legoData.onDataLoad = function() {
 	     d3.selectAll("#set"+id)  
 	    	.moveToBack()
 	    	.attr("fill", '#559')
-    	    	.attr("opacity", 0.5)
+    	    	.attr("opacity", 0.4)
      	    	.attr("r", 3);
 	 }
 	 id = d.set_id;
@@ -285,7 +285,7 @@ legoData.onDataLoad = function() {
 	      d3.selectAll("#set"+id)  
 	    	.moveToBack()
 	    	.attr("fill", '#559')
-    	    	.attr("opacity", 0.5)
+    	    	.attr("opacity", 0.4)
      	    	.attr("r", 3);}
     });
 
@@ -441,8 +441,9 @@ function arrayMode(arr) {
 	["Most Piece Type Percentage: ", d.mostPieceType.typePct.toFixed(2)+"%"]
 		];
 
-      var table = d3.select("body").append("table")
-   		.style("border", "2px black solid")
+      var table = d3.select("#info-table-wrapper").append("table")
+   		.attr("id", "info-table")
+   		.style("display", "inline-block")
 		.selectAll("tr")
         	.data(setData)
 	        .enter()
@@ -452,9 +453,20 @@ function arrayMode(arr) {
 		.enter()
 		.append("td")
 		.style("border", "1px black solid")
-    		//.style("padding", "5px")
-		.text(function(d){return d;
-		});
+		.text(function(d){return d;});
+
+      // Clear image
+      d3.select("#set-logo").remove();
+
+      // Show the image for the set
+      d3.select("#info-table-wrapper").append("img")
+        .attr("id", "set-logo")
+        .style("margin", "10px")
+        .style("width", "150px")
+        .style("display", "inline-block")
+   		.style("border", "2px black solid")
+        .attr("src", "download/img/sets/" + d.set_id + ".jpg")
+        .attr("alt", "Lego set image");
     }
 
 function arrayString(aray){
