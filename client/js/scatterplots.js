@@ -45,7 +45,7 @@ function brushed() {
 
 var brush = d3.svg.brush()
 	.x(d3.scale.identity().domain([margin.left, width+ margin.left]))
-    .y(d3.scale.identity().domain([margin.bottom, height+margin.bottom]))
+    .y(d3.scale.identity().domain([margin.top, height+margin.top]))
     .on("brushstart", brushstart)
     .on("brush", brushed) 
     .on("brushend", brushend);
@@ -233,19 +233,19 @@ legoData.onDataLoad = function() {
 	    "Year", 
 	    "Type Percentage");
   
-    appendScatterplot(
-	    data2,
-            function(d) { return d.setInfo.pieces; },
-            function(d) { return d.mostPieceType.typeCount; },
-	    "Number of Pieces in Set",
-	    "Number of Most Type Pieces in Set");
+//    appendScatterplot(
+//	    data2,
+//            function(d) { return d.setInfo.pieces; },
+//            function(d) { return d.mostPieceType.typeCount; },
+//	    "Number of Pieces in Set",
+//	    "Number of Most Type Pieces in Set");
 
-    appendScatterplot(
-	    data2,
-            function(d,i) { return d.mostPieceColor.colorPct; },
-            function(d,i) { return d.mostPieceType.typePct; },
-	    "Color Percentage", 
-	    "Type Percentage");
+//    appendScatterplot(
+//	    data2,
+//            function(d,i) { return d.mostPieceColor.colorPct; },
+//            function(d,i) { return d.mostPieceType.typePct; },
+//	    "Color Percentage", 
+//	    "Type Percentage");
 
 //Interactions
 
@@ -305,6 +305,57 @@ legoData.onDataLoad = function() {
 		} 
 	 }); 
      };
+
+
+    var searchInfo = "";
+
+
+
+	// when the input range changes update value 
+	d3.select("#search").on("keyup", function() {
+	 searchInfo = this.value 
+	  console.log(this.value);
+	});
+	var prev = "";
+
+	// adjust the text
+	d3.select("#search-button").on("click", function(){
+	  // do something...
+	if (searchInfo == "") ;
+	else{
+     		var selection =[];
+	  for (i=0; i< data2.length; i++){
+		  if ( data2[i].set_id.substring(0,searchInfo.length) == searchInfo) selection.push(data2[i].set_id)
+	  	if (data2[i].setInfo.t1.toLowerCase().indexOf(searchInfo.toLowerCase()) >-1) selection.push(data2[i].set_id);
+	  
+	  }
+	  if( prev != ""){
+	  for (j =0; j< prev.length; j++){
+		  d3.selectAll("#set"+prev[j])
+		.moveToBack()
+		.attr("fill", "#559")
+		.attr("opacity", 0.4);}}
+	  //if (selection.length ==0) d3.select("#search-value").html("No Results Found");
+	  else{
+	  for (j=0; j< selection.length; j++){
+	  d3.selectAll("#set"+selection[j])
+		.moveToFront()
+		.attr("fill", "#FFFF00")
+		.attr("opacity", 1);
+	  prev = selection;
+	  }}}
+        });		  
+		  
+		  
+		  
+		  
+		  
+		  
+
+
+
+
+
 };
 
 legoData.loadAllData();
@@ -388,7 +439,7 @@ function createData(){
 		   else return false; }); 
 
            data[index] = {
-		 set_id : sets[i].set_id,
+		 set_id : sets[i].set_id.replace(/\./g,"-"),
 		 setInfo: sets[i], 
 		 setPieceInfo: pieces, 
 		 avgPieceDescr: pieceDescr/ setPieces.length,
