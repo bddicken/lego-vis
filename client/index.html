@@ -3,61 +3,116 @@
 <html>
 <head>
 <style>
-    circle.hidden {
-    opacity: 0.1;
-    }
 
-    .brush .extent {
-      fill-opacity: .1;
-      stroke: #fff;
-      shape-rendering: crispEdges;
-    }
+.axis-label {
+  font-size: 11px;
+}
+
+.axis {
+  font-size: 10px;
+}
+
+#info-table-wrapper {
+  width:18%;
+  height:800px;
+  display: inline-block;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 4px;
+  overflow-x:scroll;
+  overflow-y:scroll;
+}
+
+#scatterplots {
+  height:800px;
+  width:46%;
+  display: inline-block;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 4px;
+  overflow-y:scroll;
+}
+
+#TSNEplot{
+  width:34%;
+  height:800px;
+  display: inline-block;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 4px;
+  overflow-x:scroll;
+  overflow-y:scroll;
+}
+
+#title-bar {
+  background-color: SteelBlue;
+  color: yellow;
+  width:100%;
+  height:50px;
+  display: inline-block;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 4px;
+  margin-bottom:5px;
+}
+
+#title {
+  font-size:26px;
+  color:white;
+  vertical-align: middle;
+  
+  line-height:50px;
+  height:50px;
+  margin-right:10px;
+}
+
+#title-logo {
+  vertical-align: middle;
+  line-height:50px;
+  height:44px;
+  margin-left:10px;
+}
+
+.chart {
+  display: inline-block;
+}
+
+circle.hidden {
+  opacity: 0.1;
+}
+
+.brush .extent {
+  fill-opacity: .1;
+  stroke: #fff;
+  shape-rendering: crispEdges;
+}
+
 </style>
 </head>
-<body></body>
+<body>
+
+<div id="title-bar">
+<img id="title-logo" src="./style/img/Lego-logo.png" alt="Lego Logo">
+<span id="title">-VIS</span>
+</div>
+
+<span id="TSNEplot"></span>
+
+<span id="scatterplots"></span>
+
+<span id="info-table-wrapper"></span>
+
+</body>
 
 
 <!--<script src="d3.v3.min.js"></script>-->
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script src="/js/lego-data.js"></script>
 <script src="/js/jquery-1.8.3.min.js"></script>
-<script src="legoRnb.js"></script>
+<script src="./js/tsne.js"></script>
+<script src="./js/scatterplots.js"></script>
+<script src="./js/set-tsne.js"></script>
 <script>
-
-//var apiURL="http://localhost:9090/api/"
-
-//var container = d3.select("body").append("div");
-
-//d3.json(apiURL + "sets/", function(error, data) {
-
-//    var allSets = container.selectAll(".div")
-//        .data(data)
-//        .enter()
-//        .append("span")
-//        .style("margin", "5px")
-//        .style("display", "inline-block")
-//        .style("height", "42px")
-//        .style("border-style", "solid")
-//        .style("border-width", "1px");
-    
-//    allSets
-//        .append("img")
-//        .attr("class", "link")
-//        .attr("src", function(d) { return "/download/img/sets/" + d.id + ".jpg"; })
-//        .attr("width", "40px" )
-//        .attr("height", "40px" );
-    
-//    allSets
-//        .append("span")
-//        .attr("class", "set")
-//        .html(function(d) { return d.descr + " : " + d.t1 + " : " + d.year; });
-    
-//    allSets
-//        .append("a")
-//        .attr("class", "link")
-//        .attr("href", function(d) { return "set.html#" + d.id; })
-//        .html("set-page");
-//});
 
 </script>
 </html>

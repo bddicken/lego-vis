@@ -1,30 +1,6 @@
-<!DOCTYPE html>
-<meta charset="utf-8">
-<html>
-<head>
+tsnePlot = (function() {
 
-<style>
-
-body {
-    font-family: Arial, Helvetica, sans-serif;
-}
-
-</style>
-
-</head>
-<body>
-
-<div id="plot" style="border:solid;border-width:1px;border-color:black;"></div>
-
-</body>
-
-<script src="../js/d3.v3.js"></script>
-<script src="../js/lego-data.js"></script>
-<script src="../js/jquery-1.8.3.min.js"></script>
-<script src="../js/tsne.js"></script>
-<script>
-
-var container = d3.select("body").append("div");
+var container = d3.select("body").append("span");
 
 appendVectorGraph = function(
         containerSelection, data, dimension, totalWidth, totalHeight) {
@@ -183,7 +159,7 @@ appendVectorGraph = function(
         tx = d3.event.translate[0];
         ty = d3.event.translate[1];
         ss = d3.event.scale;
-        updateEmbedding(ss > 2);
+        updateEmbedding(ss > 4);
     }
     
     var svg = containerSelection.append("svg") // svg is global
@@ -201,8 +177,9 @@ appendVectorGraph = function(
         .attr("class", "u");
 
     g.append("circle")
+        .attr("id", function(d) { return "set" + d.set_id; })
         .attr("fill", function(d) { return "SlateBlue" })
-        .attr("r", "6px");
+        .attr("r", "4px");
     g.append("text")
         .attr("class", "set-descr")
         .attr("text-anchor", "top")
@@ -218,31 +195,39 @@ appendVectorGraph = function(
     
     zoomListener(svg);
 
-    var zoomMode = true;
+    var zoomBrushMode = true;
+
+    var toggleZoomBrush = function() {
+        if (zoomBrushMode) {
+          tzl = d3.behavior.zoom()
+              .scaleExtent([0.1, 10])
+              .center([0,0])
+              .on("zoom", undefined);
+          tzl(svg);
+          containerGroup
+            .append("g")
+            .attr("class", "brush")
+            .call(brush);
+        }
+        else {
+            containerGroup.select(".brush").remove();
+            zoomListener(svg);
+        }
+        zoomBrushMode = !zoomBrushMode;
+        return !zoomBrushMode;
+    }
 
     // Toggle zooming and brushing with "t"
     document.onkeypress = function (e) {
         e = e || window.event;
         console.log(e.keyCode);
         if (e.keyCode == 116) {
-            if (zoomMode) {
-              tzl = d3.behavior.zoom()
-                  .scaleExtent([0.1, 10])
-                  .center([0,0])
-                  .on("zoom", undefined);
-              tzl(svg);
-              containerGroup
-                .append("g")
-                .attr("class", "brush")
-                .call(brush);
-            }
-            else {
-                containerGroup.select(".brush").remove();
-                zoomListener(svg);
-            }
-            zoomMode = !zoomMode;
+            toggleZoomBrush();
         }
     };
+
+    svg.append("text")
+        .on("click", function(d) { toggleBruthZoom(); });
 
     updateEmbedding();
 }
@@ -250,11 +235,9 @@ appendVectorGraph = function(
 var legoData = initLegoData('..')
 legoData.onDataLoad = function() {
     console.log("custom function!");
-    var allSets = d3.select("#plot");
-    appendVectorGraph(allSets, legoData.tsne, "dim", 1000, 800);
+    var allSets = d3.select("#TSNEplot");
+    appendVectorGraph(allSets, legoData.tsne, "dim", 800, 700);
 };
 legoData.loadAllData();
 
-</script>
-</html>
-
+})();

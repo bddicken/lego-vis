@@ -1,89 +1,107 @@
+var margin = {top: 20, right: 15, bottom: 50, left: 50}, 
+    width = 350 - margin.left - margin.right, 
+    height = 350 - margin.top - margin.bottom;
 
-var selected = [];
+var brushCell;
 
-function beginBrush(margin, width, height, xGetter, yGetter, x, y){
 var svg = d3.selectAll("svg");	
+
+function brushstart(){
+  if(brushCell !== this){
+    d3.selectAll(".brush").call(brush.clear());
+    brushCell = this;
+    d3.selectAll("circle")
+      .classed("hidden", function(d) { return false; });
+    }
+}
+
+function brushend() {
+  if (brush.empty()==true) {
+    d3.selectAll(".hidden").classed("hidden", false);
+    clicked = false;
+  }
+}
+           
+function brushed() {
+  var e = brush.extent();
+  var e00 = e[0][0] - margin.left;
+  var e10 = e[1][0] - margin.left;
+  var e01 = e[0][1] - margin.top;
+  var e11 = e[1][1] - margin.top;
+  d3.selectAll("circle").attr("fill", '#559');
+  d3.select(this.parentNode)
+    .selectAll("circle")
+    .classed("hidden", function(d) {
+        var p = d3.select(this); // SLOW
+        var x = p.attr("cx");
+        var y = p.attr("cy");
+        var notInBrushRange = e00 > x  || x > e10 || e01 > y  || y > e11;
+        if (!notInBrushRange) {
+            d3.selectAll("#" + p.attr("id")).attr("fill", "red"); // SLOW
+        } 
+        return false;
+    });
+}
+
 var brush = d3.svg.brush()
 	.x(d3.scale.identity().domain([margin.left, width+ margin.left]))
-        .y(d3.scale.identity().domain([margin.bottom, height+margin.bottom]));
-	
-var brushCell;
-var node = svg.selectAll("circle");
+    .y(d3.scale.identity().domain([margin.bottom, height+margin.bottom]))
+    .on("brushstart", brushstart)
+    .on("brush", brushed) 
+    .on("brushend", brushend);
 
+var min = function(d, getter) {
+    var value = getter(d[0]);
+    for (var i in d) {
+        if (getter(d[i]) < value) { 
+            value = getter(d[i]);
+        }
+    }
+    return value;
+}
 
-var brusher = svg.append("g")
-    	  	.attr("class", "brush")
-     		.call(brush
-        	.on("brushstart", brushstart)
-        	.on("brush", 
-		   function() {
-          	     var e = brush.extent();
-          	     node.classed("hidden", 
-	               function(d) {
-			       var p = d3.select(this);
-			 var xx = p.attr("cx");
-		         var yy = p.attr("cy");
-		         if ( e[0][0]-margin.left > x(xGetter(d))  || x(xGetter(d)) > e[1][0]-margin.left
-          			|| e[0][1]-margin.top >y(yGetter(d)) || y(yGetter(d)) > e[1][1]-margin.top){
-			       	//d3.selectAll("#"+ d3.select(this).attr("id")).attr("fill", '#559');
-			
-					return true;
-				}
-		 	else{ 	 
-				//selected.push(d3.select(this).attr("class"));
-				var point = document.getElementById("set"+ d.set_id);
-			     point.setAttribute("fill", "red");
-				//console.log(p.size());
-				return false;
-			}
-		       });
-
-		   })
-		.on("brushend", brushend));
-    
-    	function brushstart(){
-      	  if(brushCell !== this){
-          d3.select(brushCell).call(brush.clear());
-          brushCell = this;}}
-
-    	function brushend() {
-      	  if (brush.empty()==true){ svg.selectAll(".hidden").classed("hidden", false);
-		//original();
-		clicked = false;}}
-
-}	
-
-
-
+var max = function(d, getter) {
+    var value = getter(d[0]);
+    for (var i in d) {
+        if (getter(d[i]) > value) { 
+            value = getter(d[i]);
+        }
+    }
+    return value;
+}
 
 var legoData = initLegoData(" ")
+var chartCounter = 1;
 
 var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
 
-
-    var margin = {top: 20, right: 15, bottom: 60, left: 60}, 
-        width = 500 - margin.left - margin.right, 
-        height = 500 - margin.top - margin.bottom;
+    var xmin = min(data, xGetter);
+    var xmax = max(data, xGetter);
+    var ymin = min(data, yGetter);
+    var ymax = max(data, yGetter);
 
     var x = d3.scale.linear()
-        .domain([d3.min(data, function(d) { return xGetter(d); }), 
-                 d3.max(data, function(d) { return xGetter(d); })])
+        .domain([xmin, xmax])
         .range([ 0, width ]);
 
     var y = d3.scale.linear()
-        .domain([d3.min(data, function(d) { return yGetter(d); }), 
-                 d3.max(data, function(d) { return yGetter(d); }) ])
+        .domain([ymin, ymax])
         .range([height, 0 ]);
+    
+    var container = d3.select('#scatterplots')
+        .append('span');
+    var containerP = 
+        container.append('span');
 
-    var chart = d3.select('body')
-        .append('svg:svg')
+    var chartId = 'c' + chartCounter++;
+    var chart = 
+        //d3.select('body')
+        containerP.append('svg:svg')
+        .style("margin", "5px")
         .attr('width', width + margin.right + margin.left)
         .attr('height', height + margin.top + margin.bottom)
         .attr('class', 'chart')
-
-
-
-	beginBrush(margin, width, height, xGetter, yGetter, x, y);
+        .attr('id', chartId)
 
 
     // add background to all svg elements so we can click on background    
@@ -94,7 +112,11 @@ var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
 	.attr("width",width+ margin.right + margin.left)
 	.attr("height",height+ margin.top + margin.bottom)
 	.attr("fill", "#FFFFFF");
-
+    
+    chart
+        .append("g")
+        .attr("class", "brush")
+        .call(brush);
 
     var main = chart.append('g')
     .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
@@ -106,7 +128,7 @@ var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
     var xAxis = d3.svg.axis()
         .scale(x)
         .orient('bottom')
-        .ticks(6);
+        .ticks(5);
 
     var xAxisNodes = main.append('g')
         .attr('transform', 'translate(0,' + height + ')')
@@ -118,7 +140,7 @@ var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
 
     // x axis label	
     chart.append("text")
-        .attr("class", "x label")
+        .attr("class", "x axis-label label")
         .attr("text-anchor", "end")
         .attr("x", width + margin.left)
         .attr("y", height + margin.bottom)
@@ -129,7 +151,7 @@ var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
     var yAxis = d3.svg.axis()
     .scale(y)
     .orient('left')
-    .ticks(6);
+    .ticks(5);
 
     var yAxisNodes = main.append('g')
     .attr('transform', 'translate(0,0)')
@@ -141,7 +163,7 @@ var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
     
     // y axis label
     chart.append("text")
-        .attr("class", "y label")
+        .attr("class", "y axis-label label")
         .attr("text-anchor", "end")
         .attr("x", -margin.top)
 	.attr("y", 4)
@@ -158,7 +180,7 @@ var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
     .attr("cx", function (d) { return x(xGetter(d)); } )
     .attr("cy", function (d) { return y(yGetter(d)); } )
     .attr("fill", '#559')
-    .attr("opacity", 0.5)
+    .attr("opacity", 0.4)
     .attr("r", 3);
 }
 
@@ -168,7 +190,7 @@ legoData.onDataLoad = function() {
     
     //var data = legoData.setsArray();
     var data2 = createData();
-    
+	
     appendScatterplot( 
  	    data2,
             function(d) { return d.setInfo.year; },
@@ -224,7 +246,6 @@ legoData.onDataLoad = function() {
             function(d,i) { return d.mostPieceType.typePct; },
 	    "Color Percentage", 
 	    "Type Percentage");
-  
 
 //Interactions
 
@@ -243,13 +264,13 @@ legoData.onDataLoad = function() {
 	     d3.selectAll("#set"+id)  
 	    	.moveToBack()
 	    	.attr("fill", '#559')
-    	    	.attr("opacity", 0.5)
+    	    	.attr("opacity", 0.4)
      	    	.attr("r", 3);
 	 }
 	 id = d.set_id;
  	 d3.selectAll("#set"+id)
 	    .moveToFront()
-	    .attr("fill", 'red')
+	    .attr("fill", 'Lime')
     	    .attr("opacity", 1)
      	    .attr("r", 6);
        var setTable = tabulate(d,i);		
@@ -264,7 +285,7 @@ legoData.onDataLoad = function() {
 	      d3.selectAll("#set"+id)  
 	    	.moveToBack()
 	    	.attr("fill", '#559')
-    	    	.attr("opacity", 0.5)
+    	    	.attr("opacity", 0.4)
      	    	.attr("r", 3);}
     });
 
@@ -284,8 +305,6 @@ legoData.onDataLoad = function() {
 		} 
 	 }); 
      };
-
-
 };
 
 legoData.loadAllData();
@@ -369,7 +388,7 @@ function createData(){
 		   else return false; }); 
 
            data[index] = {
-		 set_id : sets[i].set_id.replace(/\./g,"-"),
+		 set_id : sets[i].set_id,
 		 setInfo: sets[i], 
 		 setPieceInfo: pieces, 
 		 avgPieceDescr: pieceDescr/ setPieces.length,
@@ -407,7 +426,7 @@ function arrayMode(arr) {
     // The table generation function
     function tabulate(d,i) {
       var setData = [
-	["Set ID: ",  d.set_id ],
+	["Set ID: ",  d.set_id.replace(/\./g,"-") ],
 	["Year Made: ", d.setInfo.year],      
 	["Category: ", d.setInfo.t1],
 	["Number of Pieces: ", d.setInfo.pieces],
@@ -422,8 +441,9 @@ function arrayMode(arr) {
 	["Most Piece Type Percentage: ", d.mostPieceType.typePct.toFixed(2)+"%"]
 		];
 
-      var table = d3.select("body").append("table")
-   		.style("border", "2px black solid")
+      var table = d3.select("#info-table-wrapper").append("table")
+   		.attr("id", "info-table")
+   		.style("display", "inline-block")
 		.selectAll("tr")
         	.data(setData)
 	        .enter()
@@ -433,9 +453,20 @@ function arrayMode(arr) {
 		.enter()
 		.append("td")
 		.style("border", "1px black solid")
-    		//.style("padding", "5px")
-		.text(function(d){return d;
-		});
+		.text(function(d){return d;});
+
+      // Clear image
+      d3.select("#set-logo").remove();
+
+      // Show the image for the set
+      d3.select("#info-table-wrapper").append("img")
+        .attr("id", "set-logo")
+        .style("margin", "10px")
+        .style("width", "150px")
+        .style("display", "inline-block")
+   		.style("border", "2px black solid")
+        .attr("src", "download/img/sets/" + d.set_id + ".jpg")
+        .attr("alt", "Lego set image");
     }
 
 function arrayString(aray){
