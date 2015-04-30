@@ -268,7 +268,6 @@ legoData.onDataLoad = function() {
 
     	// Some Global Vars
     	var svg = d3.selectAll("svg");
-    	var prev = "";
 	//var selection =[];
 	//var id = 0;
 	var p = 0;
@@ -336,105 +335,7 @@ legoData.onDataLoad = function() {
 	 }); 
      };
 
-    //////////////////////// User Search ////////////////////////////////////
-	// Get User's search value 
-	d3.select("#search").on("keyup", function() {
-	 	searchInfo = this.value.toLowerCase(); 
-	});
-	
-	// Search for sets by set_id
-	d3.select("#search-setid").on("click", function(){
-		if (searchInfo != ""){
-     	  	selection =[];
-	  	for (i=0; i< data2.length; i++){
-		  if ( data2[i].set_id.toLowerCase().substring(0,searchInfo.length) 
-			  == searchInfo) 
-			selection.push(data2[i].set_id) 
-	  	  }
-	   	  findSets(selection);
-		}
-	});
-
-	// Search for sets by piece_id
-	d3.select("#search-pieceid").on("click", function(){
-		var setPieces =legoData.setPiecesArray();
-		if (searchInfo != ""){
-    	  	selection =[];
-	  	for (i=0; i< setPieces.length; i++){
-		  if ( setPieces[i].piece_id.
-			  substring(0,searchInfo.length) == searchInfo) 
-			selection.push(setPieces[i].set_id); 
-	  	  }
-	  	  findSets(selection);
-		}
-	});
-
-	// Search for sets by word in descr or category (t1)
-	d3.select("#search-descr").on("click",function(){
-		if (searchInfo != ""){
-     	  	selection =[];
-	  	for (i=0; i< data2.length; i++){
-		  var string = searchInfo.toLowerCase();
-	    	  if (data2[i].setInfo.t1.toLowerCase().indexOf(string) >-1
-			|| data2[i].setInfo.descr.toLowerCase().indexOf(string) >-1) 
-			selection.push(data2[i].set_id);
-	  	  }
-	  	  findSets(selection);
-		}
-	});
-
-	// Helper function for searching sets and coloring points 
-	function findSets(selection){
-	  	for (j =0; j< prev.length; j++){
-		  var isSelected = selection.indexOf(id) > -1;
-		  d3.selectAll("#set"+prev[j])
-		    //.moveToBack()
-		    .attr("fill", colorPoints(prev[j], isSelected))
-		    .attr("opacity", function(){
-			    return isSelected ? 1: 0.4;});
-		}
-	  	if (selection.length ==0){ 
-		  d3.select("#noResult").remove();
-		  d3.select("#buttons")
-		    .append("p")
-		    .attr("id", "noResult")
-		    .html("No Results Found");
-		}
-	  	else{
-		  d3.select("#noResult").remove();
-	  	  for (j=0; j< selection.length; j++){
-	  	    d3.selectAll("#set"+selection[j])
-		      .moveToFront()
-		      .attr("fill", "#FFFF00")
-		      .attr("opacity", 1)
-		      .attr("r", 3);
-		  }
-		  prev = selection;
-	  	}
-	}	
-
-	// Helper function to color points
-	function colorPoints(id, isSelected){
-		if (isSelected) { return '#FFFF00';}
-		else{
-		if(e != undefined){
-		  var e00 = e[0][0] - margin.left;
-		  var e10 = e[1][0] - margin.left;
-		  var e01 = e[0][1] - margin.top;
-		  var e11 = e[1][1] - margin.top;
-		  var extent = d3.selectAll(".extent")[0];
-	  	  extent.filter(function(value){ return value.width.baseVal.value !=0});
-		  var chartId = extent[0].parentNode.parentNode.id;	  
-		  var a = d3.select("#"+chartId).select("#set"+id);
-		  var x = a.attr("cx");
-		  var y = a.attr("cy");
-		  var notInBrush = e00 > x || x > e10 || e01 > y || y > e11;
-		}
-		else notInBrush = true;
-		if (!notInBrush) return "red";
-		else return "#559";
-		}
-	}
+    setUpSearch(data2);
 
 };
 //////////////////////////////////////////////////////////////////////////////////////
@@ -547,51 +448,159 @@ function arrayMode(arr) {
     	return [a, b];
 }
 
-    ////////////////////////// Table generation function //////////////////////
-    function tabulate(d,i) {
-      var setData = [
-	["Set ID: ",  d.set_id.replace(/\./g,"-") ],
-	["Year Made: ", d.setInfo.year],      
-	["Category: ", d.setInfo.t1],
-	["Number of Pieces: ", d.setInfo.pieces],
-	["Number of Unique Pieces: " , d.setPieceInfo.length],
-	["Average Piece Description Length: ", d.avgPieceDescr.toFixed(2) ],
-	["Average Piece Count: ", d.avgPieceCount.toFixed(2)],
-	["Most Piece Categories: ",arrayString(d.mostPieceCat.cats)],
-	["Most Piece Category Percentage: ", d.mostPieceCat.catPct.toFixed(2)+"%"],
+////////////////////////// Table generation function //////////////////////
+function tabulate(d,i) {
+    var setData = [
+        ["Set ID: ",  d.set_id.replace(/\./g,"-") ],
+        ["Year Made: ", d.setInfo.year],      
+        ["Category: ", d.setInfo.t1],
+        ["Number of Pieces: ", d.setInfo.pieces],
+        ["Number of Unique Pieces: " , d.setPieceInfo.length],
+        ["Average Piece Description Length: ", d.avgPieceDescr.toFixed(2) ],
+        ["Average Piece Count: ", d.avgPieceCount.toFixed(2)],
+        ["Most Piece Categories: ",arrayString(d.mostPieceCat.cats)],
+        ["Most Piece Category Percentage: ", d.mostPieceCat.catPct.toFixed(2)+"%"],
         ["Most Piece Colors: ", arrayString(d.mostPieceColor.colors)],
-	["Most Piece Color Percentage: ", d.mostPieceColor.colorCount + " pieces " + d.mostPieceColor.colorPct.toFixed(2)+"%"],
-	["Most Piece Tyes: ", arrayString(d.mostPieceType.types)],
-	["Most Piece Type Percentage: ", d.mostPieceType.typePct.toFixed(2)+"%"]
-		];
+        ["Most Piece Color Percentage: ", d.mostPieceColor.colorCount + " pieces " + d.mostPieceColor.colorPct.toFixed(2)+"%"],
+        ["Most Piece Tyes: ", arrayString(d.mostPieceType.types)],
+        ["Most Piece Type Percentage: ", d.mostPieceType.typePct.toFixed(2)+"%"]
+    ];
 
-      // Clear image
-      d3.select("#set-logo").remove();
+    //var table = d3.select("#info-table-wrapper").html("");
+    d3.select("#info-table-wrapper").select("#set-logo").remove();
 
-      // Show the image for the set
-      d3.select("#info-table-wrapper").append("img")
+    // Clear image
+    d3.select("#set-logo").remove();
+
+    // Show the image for the set
+    d3.select("#info-table-wrapper").append("img")
         .attr("id", "set-logo")
         .style("margin", "10px")
         .style("width", "150px")
         .style("display", "inline-block")
-   		.style("border", "2px black solid")
+        .style("border", "2px black solid")
         .attr("src", "download/img/sets/" + d.set_id + ".jpg")
         .attr("alt", "Lego set image");
- 
-      var table = d3.select("#info-table-wrapper").append("table")
-   		.attr("id", "info-table")
-   		.style("display", "inline-block")
-		.selectAll("tr")
-        	.data(setData)
-	        .enter()
- 	       	.append("tr")
-		.selectAll("td")
-		.data(function(d){return d;})
-		.enter()
-		.append("td")
-		.style("border", "1px black solid")
-		.text(function(d){return d;});      
-   }
+
+    var table = d3.select("#info-table-wrapper").append("table")
+        .attr("id", "info-table")
+        .style("display", "inline-block")
+        .selectAll("tr")
+        .data(setData)
+        .enter()
+        .append("tr")
+        .selectAll("td")
+        .data(function(d){return d;})
+        .enter()
+        .append("td")
+        .style("border", "1px black solid")
+        .text(function(d){return d;});      
+}
+
+//////////////////////// User Search ////////////////////////////////////
+function setUpSearch(data2){
+    	
+    var prev = "";
+
+	// Get User's search value 
+	d3.select("#search").on("keyup", function() {
+	 	searchInfo = this.value.toLowerCase(); 
+	});
+	
+	// Search for sets by set_id
+	d3.select("#search-setid").on("click", function(){
+		if (searchInfo != ""){
+     	  	selection =[];
+	  	for (i=0; i< data2.length; i++){
+		  if ( data2[i].set_id.toLowerCase().substring(0,searchInfo.length) 
+			  == searchInfo) 
+			selection.push(data2[i].set_id) 
+	  	  }
+	   	  findSets(selection);
+		}
+	});
+
+	// Search for sets by piece_id
+	d3.select("#search-pieceid").on("click", function(){
+		var setPieces =legoData.setPiecesArray();
+		if (searchInfo != ""){
+    	  	selection =[];
+	  	for (i=0; i< setPieces.length; i++){
+		  if ( setPieces[i].piece_id.
+			  substring(0,searchInfo.length) == searchInfo) 
+			selection.push(setPieces[i].set_id); 
+	  	  }
+	  	  findSets(selection);
+		}
+	});
+
+	// Search for sets by word in descr or category (t1)
+	d3.select("#search-descr").on("click",function(){
+		if (searchInfo != ""){
+     	  	selection =[];
+	  	for (i=0; i< data2.length; i++){
+		  var string = searchInfo.toLowerCase();
+	    	  if (data2[i].setInfo.t1.toLowerCase().indexOf(string) >-1
+			|| data2[i].setInfo.descr.toLowerCase().indexOf(string) >-1) 
+			selection.push(data2[i].set_id);
+	  	  }
+	  	  findSets(selection);
+		}
+	});
+
+	// Helper function for searching sets and coloring points 
+	function findSets(selection){
+	  	for (j =0; j< prev.length; j++){
+		  var isSelected = selection.indexOf(id) > -1;
+		  d3.selectAll("#set"+prev[j])
+		    //.moveToBack()
+		    .attr("fill", colorPoints(prev[j], isSelected))
+		    .attr("opacity", function(){
+			    return isSelected ? 1: 0.4;});
+		}
+	  	if (selection.length ==0){ 
+		  d3.select("#noResult").remove();
+		  d3.select("#buttons")
+		    .append("p")
+		    .attr("id", "noResult")
+		    .html("No Results Found");
+		}
+	  	else{
+		  d3.select("#noResult").remove();
+	  	  for (j=0; j< selection.length; j++){
+	  	    d3.selectAll("#set"+selection[j])
+		      .moveToFront()
+		      .attr("fill", "#FFFF00")
+		      .attr("opacity", 1)
+		      .attr("r", 3);
+		  }
+		  prev = selection;
+	  	}
+	}	
+}
+
+// Helper function to color points
+function colorPoints(id, isSelected){
+    if (isSelected) { return '#FFFF00';}
+    else{
+    if(e != undefined){
+      var e00 = e[0][0] - margin.left;
+      var e10 = e[1][0] - margin.left;
+      var e01 = e[0][1] - margin.top;
+      var e11 = e[1][1] - margin.top;
+      var extent = d3.selectAll(".extent")[0];
+      extent.filter(function(value){ return value.width.baseVal.value !=0});
+      var chartId = extent[0].parentNode.parentNode.id;	  
+      var a = d3.select("#"+chartId).select("#set"+id);
+      var x = a.attr("cx");
+      var y = a.attr("cy");
+      var notInBrush = e00 > x || x > e10 || e01 > y || y > e11;
+    }
+    else notInBrush = true;
+    if (!notInBrush) return "red";
+    else return "#559";
+    }
+}
 
 function arrayString(aray){
     	var string = "";	   
