@@ -4,6 +4,12 @@
 <head>
 <style>
 
+.shadow {
+    /* Same syntax as box-shadow */
+  -webkit-filter: drop-shadow( 0px 0px 7px rgba(255,255,255,1.0) );
+          filter: drop-shadow( 0px 0px 7px rgba(255,255,255,1.0) );
+}
+
 .axis-label {
   font-size: 11px;
 }
@@ -13,14 +19,14 @@
 }
 
 #info-table-wrapper {
-  width:18%;
+  width:16%;
   height:800px;
   display: inline-block;
   border-style: solid;
   border-width: 1px;
   border-radius: 4px;
-  overflow-x:scroll;
-  overflow-y:scroll;
+  overflow-x:hidden;
+  overflow-y:hidden;
 }
 
 #scatterplots {
@@ -34,14 +40,14 @@
 }
 
 #TSNEplot{
-  width:34%;
+  width:36%;
   height:800px;
   display: inline-block;
   border-style: solid;
   border-width: 1px;
   border-radius: 4px;
-  overflow-x:scroll;
-  overflow-y:scroll;
+  overflow-x:hidden;
+  overflow-y:hidden;
 }
 
 #title-bar {
@@ -94,6 +100,20 @@ circle.hidden {
 <div id="title-bar">
 <img id="title-logo" src="./style/img/Lego-logo.png" alt="Lego Logo">
 <span id="title">-VIS</span>
+
+<label for="search" 
+    style="display: inline-block; width: 450px; text-align: left">
+  <span id="search-value">
+    <input type="text" value="search" id="search">	 	
+  </span>
+  <span id="buttons" style="margin-left:10px">
+  <button id="search-setid"> Set ID</button> 
+  <button id="search-pieceid"> Piece ID</button> 
+  <button id="search-descr"> Description</button> 
+</span>
+
+</label>
+
 </div>
 
 <span id="TSNEplot"></span>
@@ -101,20 +121,7 @@ circle.hidden {
 <span id="scatterplots"></span>
 
 <span id="info-table-wrapper">
-<p style="margin-left:10px;">
-  <label for="search" 
-         style="display: inline-block; width: 450px; text-align: left">
-          <span id="search-value">
-  	  <input type="text" value="search" id="search">	 	
-          </span>
-	  <div id="buttons" style="margin-left:10px">
-	  <button id="search-setid"> Set ID</button> 
-	  <button id="search-pieceid"> Piece ID</button> 
-	  <button id="search-descr"> Description</button> 
-  	</div>
-
-  </label>
-</p>
+<div></div> <!-- keep this div here! -->
 </span>
 
 </body>
@@ -124,9 +131,9 @@ circle.hidden {
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script src="/js/lego-data.js"></script>
 <script src="/js/jquery-1.8.3.min.js"></script>
-<!--<script src="./js/tsne.js"></script>-->
+<script src="./js/tsne.js"></script>-
 <script src="./js/scatterplots.js"></script>
-<!--<script src="./js/set-tsne.js"></script>-->
+<script src="./js/set-tsne.js"></script>
 <script>
 
 </script>

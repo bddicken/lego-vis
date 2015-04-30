@@ -2,17 +2,12 @@ tsnePlot = (function() {
 
 var container = d3.select("body").append("span");
 
-appendVectorGraph = function(
-        containerSelection, data, dimension, totalWidth, totalHeight) {
+appendVectorGraph = function(containerSelection, data, dimension, totalWidth, totalHeight) {
 
     console.log("appending graph!");
 
-    var opt = {epsilon: 20, perplexity: 20};
-    var T = new tsnejs.tSNE(opt); // create a tSNE instance
-    var stepNum = 0;
     var tx=0, ty=0;
     var ss=1;
-    var stepMax = 200;
     
     var margin = {top: 10, right: 10, bottom: 10, left: 10};
     var width = totalWidth 
@@ -34,22 +29,25 @@ appendVectorGraph = function(
         }
     }
 
-    var players = [];
-
+    // TODO: remove duplication in this function between here and scatterplots.js
     var brushmove = function(p) {
+
         var e = brush.extent();
         var b00 = e[0][0]; 
         var b01 = e[0][1];
         var b10 = e[1][0];
         var b11 = e[1][1];
-        players = [];
+        
+        d3.selectAll("circle").attr("fill", '#559');
+        
         svg.selectAll("circle").classed("hidden", function(d, i) {
             var xp = ((data.output[i][0]*20*ss + tx) + 400);
             var yp = ((data.output[i][1]*20*ss + ty) + 400) * (-1) + height;
-            var value = b00 > xp || xp > b10
-                || b01 > yp || yp > b11;
-            if (!value) { players.push(d); };
-            return value;
+            var value = b00 > xp || xp > b10 || b01 > yp || yp > b11;
+            if (!value) { 
+                d3.selectAll("#set" + d.set_id.replace(/\./g, "-")).attr("fill", "red"); // SLOW
+            }
+            return false;
         });
     }
 
@@ -93,21 +91,15 @@ appendVectorGraph = function(
       
       svg.selectAll("set-t1")
         .data(catsa).enter().append("text")
-        .attr("class", "set-t1")
+        .attr("class", "set-t1 shadow")
         .attr("font-size", 18)
         .attr("text-anchor", "top")
         .style("fill", "OrangeRed")
         .style("font-weight", "bold")
         .style("opacity", 1.0)
         .text(function(d) { return d.t1; })
-        .attr("x", function(d) { 
-            console.log(d.x / d.cx);
-            return d.x / d.cx;
-        })
-        .attr("y", function(d) { 
-            console.log(d.y / d.cy);
-            return d.y / d.cy;
-        });
+        .attr("x", function(d) { return d.x / d.cx; })
+        .attr("y", function(d) { return d.y / d.cy; });
     }
 
     var updateEmbedding = function(show_text) {
@@ -115,6 +107,14 @@ appendVectorGraph = function(
       // TODO: cleanup circle/text pairing
       var datapoints = svg.selectAll("circle")
           .data(data.input.words)
+          .on("click", function(d) { 
+                // TODO: THIS IS HACKY!!!
+                d3.selectAll("#set" + d.set_id.replace(/\./g, "-"))
+                  .classed("YOLO", function(d, i) {
+                    if (i == 2)
+                        tabulate(d, i); 
+                  });
+          }) 
           .attr("cx",
               function(d,i) { 
                 return ((data.output[i][0]*20*ss + tx) + 400);
@@ -155,7 +155,6 @@ appendVectorGraph = function(
     }
 
     var zoomHandler = function() {
-        console.log("zh");
         tx = d3.event.translate[0];
         ty = d3.event.translate[1];
         ss = d3.event.scale;
@@ -192,11 +191,12 @@ appendVectorGraph = function(
         .on("zoom", zoomHandler);
     
     brushend(null);
+
+    updateEmbedding();
     
     zoomListener(svg);
-
-    var zoomBrushMode = true;
-
+        
+    // Toggles zooming and brushing mode
     var toggleZoomBrush = function() {
         if (zoomBrushMode) {
           tzl = d3.behavior.zoom()
@@ -214,29 +214,39 @@ appendVectorGraph = function(
             zoomListener(svg);
         }
         zoomBrushMode = !zoomBrushMode;
-        return !zoomBrushMode;
+        return zoomBrushMode ? "brush mode" : "zoom mode"; 
     }
 
-    // Toggle zooming and brushing with "t"
-    document.onkeypress = function (e) {
-        e = e || window.event;
-        console.log(e.keyCode);
-        if (e.keyCode == 116) {
-            toggleZoomBrush();
-        }
-    };
-
-    svg.append("text")
-        .on("click", function(d) { toggleBruthZoom(); });
-
-    updateEmbedding();
+    var zoomBrushMode = true;
+   
+    // Zoom/Brush toggle button
+    var zoomBrushButton = svg.append("g");
+    var zoomBrushText = zoomBrushButton.append("text")
+        .attr("x", 10)
+        .attr("y", 22)
+        .attr("text-anchor", "top")
+        .attr("font-size", 14)
+        .style("cursor", "pointer")
+        .on("click", function(d) { 
+            d3.select(this).text(function() { return toggleZoomBrush(); } );
+        })
+        .text(function() { return zoomBrushMode ? "brush mode" : "zoom mode"; } );
+    var bbox = zoomBrushText.node().getBBox();
+    var padding = 4;
+    zoomBrushButton.insert("rect","text")
+        .attr("x", bbox.x - padding)
+        .attr("y", bbox.y - padding)
+        .attr("width", bbox.width + (padding*2))
+        .attr("height", bbox.height + (padding*2))
+        .style("fill", "#ccc");
 }
 
+// TODO: make better summaries 
 var legoData = initLegoData('..')
 legoData.onDataLoad = function() {
     console.log("custom function!");
     var allSets = d3.select("#TSNEplot");
-    appendVectorGraph(allSets, legoData.tsne, "dim", 800, 700);
+    appendVectorGraph(allSets, legoData.tsne, "dim", 1000, 800);
 };
 legoData.loadAllData();
 
