@@ -1,189 +1,220 @@
+//"Code Folding Settings in _vimrc
+//"from VIM use e: $MYVIMRC
+//set foldmethod=indent   "fold based on indent
+//set foldnestmax=10      "deepest fold is 10 levels
+//set nofoldenable        "dont fold by default
+//set foldlevel=3         
+
+
+//////////////////////// Some Global Vars///////////////////////////
+// Svg Margins:
 var margin = {top: 20, right: 15, bottom: 50, left: 50}, 
     width = 350 - margin.left - margin.right, 
     height = 350 - margin.top - margin.bottom;
 
 var brushCell;
+var selection = []; 	// array of points selected by search
+var e; 			// extent of brush
+var id = "";		// set_id of clicked point
 
 var svg = d3.selectAll("svg");	
+//////////////////////////////////////////////////////////////////
 
+//////////////////// Function when starting brush //////////////////
 function brushstart(){
-  if(brushCell !== this){
-    d3.selectAll(".brush").call(brush.clear());
-    brushCell = this;
-    d3.selectAll("circle")
-      .classed("hidden", function(d) { return false; });
-    }
+	if(brushCell !== this){
+    		d3.selectAll(".brush").call(brush.clear());
+    		brushCell = this;
+    		d3.selectAll("circle")
+      		.classed("hidden", function(d) { return false; });
+    	}
 }
 
+// Function when brush ends
 function brushend() {
-  if (brush.empty()==true) {
-    d3.selectAll(".hidden").classed("hidden", false);
-    clicked = false;
-  }
+	if (brush.empty()==true) {
+		d3.select("table").remove();
+		d3.select("#set-logo").remove();
+    		d3.selectAll(".hidden").classed("hidden", false);
+    		d3.selectAll("circle")
+			.attr("fill", "#559")
+			.attr("r", 3)
+			.attr("opacity", 0.4);
+  	}
 }
-           
+ 
+// Function when brush moves
 function brushed() {
-  var e = brush.extent();
-  var e00 = e[0][0] - margin.left;
-  var e10 = e[1][0] - margin.left;
-  var e01 = e[0][1] - margin.top;
-  var e11 = e[1][1] - margin.top;
-  d3.selectAll("circle").attr("fill", '#559');
-  d3.select(this.parentNode)
-    .selectAll("circle")
-    .classed("hidden", function(d) {
-        var p = d3.select(this); // SLOW
-        var x = p.attr("cx");
-        var y = p.attr("cy");
-        var notInBrushRange = e00 > x  || x > e10 || e01 > y  || y > e11;
-        if (!notInBrushRange) {
-            d3.selectAll("#" + p.attr("id")).attr("fill", "red"); // SLOW
-        } 
-        return false;
-    });
+ 	 e = brush.extent();
+  	var e00 = e[0][0] - margin.left;
+  	var e10 = e[1][0] - margin.left;
+  	var e01 = e[0][1] - margin.top;
+  	var e11 = e[1][1] - margin.top;
+  	
+  	d3.select(this.parentNode)
+    		.selectAll("circle")
+    		.classed("hidden", function(d) {
+			var p = d3.select(this); // SLOW
+        		var x = p.attr("cx");
+        		var y = p.attr("cy");
+        		var notInBrushRange = e00 > x  || x > e10 || e01 > y  || y > e11;
+        		var isSelected = selection.indexOf(p.attr("id").substring(3)) > -1;
+			if (isSelected == true || p.attr("id").substring(3) == id);//SLOW
+			else if (!notInBrushRange) {
+            			d3.selectAll("#" + p.attr("id"))
+					.moveToFront()
+					.attr("fill", "red"); // SLOW
+        		} 
+			else d3.selectAll("#" + p.attr("id")).attr("fill", "#559"); 
+        		return false;
+    	});
 }
 
+// Create a brush on all svg elements
 var brush = d3.svg.brush()
 	.x(d3.scale.identity().domain([margin.left, width+ margin.left]))
-    .y(d3.scale.identity().domain([margin.top, height+margin.top]))
-    .on("brushstart", brushstart)
-    .on("brush", brushed) 
-    .on("brushend", brushend);
+    	.y(d3.scale.identity().domain([margin.top, height+margin.top]))
+    	.on("brushstart", brushstart)
+    	.on("brush", brushed) 
+    	.on("brushend", brushend);
+//////////////////////////////////////////////////////////////////////////    
 
+// Function to get minimum
 var min = function(d, getter) {
-    var value = getter(d[0]);
-    for (var i in d) {
-        if (getter(d[i]) < value) { 
-            value = getter(d[i]);
-        }
-    }
-    return value;
+    	var value = +getter(d[0]);
+    	for (var i in d) {
+        	if (+getter(d[i]) < value) { 
+            	value = +getter(d[i]);
+        	}
+    	}
+    	return value;
 }
 
+// Function to get maximum
 var max = function(d, getter) {
-    var value = getter(d[0]);
-    for (var i in d) {
-        if (getter(d[i]) > value) { 
-            value = getter(d[i]);
-        }
-    }
-    return value;
+    	var value = +getter(d[0]);
+    	for (var i in d) {
+        	if (+getter(d[i]) > value) { 
+            	value = +getter(d[i]);
+        	}
+    	}
+    	return value;
 }
 
 var legoData = initLegoData(" ")
 var chartCounter = 1;
 
+
+/////////////////////////// Function to create scatterplots ////////////////////////
 var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
 
-    var xmin = min(data, xGetter);
-    var xmax = max(data, xGetter);
-    var ymin = min(data, yGetter);
-    var ymax = max(data, yGetter);
+    	var xmin = min(data, xGetter);
+    	var xmax = max(data, xGetter);
+    	var ymin = min(data, yGetter);
+    	var ymax = max(data, yGetter);
+	console.log(ymax);
+   	var x = d3.scale.linear()
+        	.domain([xmin, xmax])
+        	.range([ 0, width ]);
 
-    var x = d3.scale.linear()
-        .domain([xmin, xmax])
-        .range([ 0, width ]);
-
-    var y = d3.scale.linear()
-        .domain([ymin, ymax])
-        .range([height, 0 ]);
+    	var y = d3.scale.linear()
+        	.domain([ymin, ymax])
+        	.range([height, 0 ]);
     
-    var container = d3.select('#scatterplots')
-        .append('span');
-    var containerP = 
-        container.append('span');
+    	var container = d3.select('#scatterplots')
+        	.append('span');
+    	var containerP = container.append('span');
 
-    var chartId = 'c' + chartCounter++;
-    var chart = 
-        //d3.select('body')
-        containerP.append('svg:svg')
-        .style("margin", "5px")
-        .attr('width', width + margin.right + margin.left)
-        .attr('height', height + margin.top + margin.bottom)
-        .attr('class', 'chart')
-        .attr('id', chartId)
+    	var chartId = 'c' + chartCounter++;
+    	var chart = containerP.append('svg:svg')
+        	.style("margin", "5px")
+        	.attr('width', width + margin.right + margin.left)
+        	.attr('height', height + margin.top + margin.bottom)
+        	.attr('class', 'chart')
+        	.attr('id', chartId)
 
-
-    // add background to all svg elements so we can click on background    
-    chart.append("rect")
-	.attr("id", "background_click")
-	.attr("x",0)
-	.attr("y",0)
-	.attr("width",width+ margin.right + margin.left)
-	.attr("height",height+ margin.top + margin.bottom)
-	.attr("fill", "#FFFFFF");
+    	
+    	chart.append("rect")
+		.attr("id", "background_click")
+		.attr("x",0)
+		.attr("y",0)
+		.attr("width",width+ margin.right + margin.left)
+		.attr("height",height+ margin.top + margin.bottom)
+		.attr("fill", "#FFFFFF");
     
-    chart
-        .append("g")
-        .attr("class", "brush")
-        .call(brush);
+    	chart.append("g")
+        	.attr("class", "brush")
+        	.call(brush);
 
-    var main = chart.append('g')
-    .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
-            .attr('width', width)
-            .attr('height', height)
-            .attr('class', 'main')   
+    	var main = chart.append('g')
+    		.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
+            	.attr('width', width)
+            	.attr('height', height)
+            	.attr('class', 'main')   
 
-    // draw the x axis
-    var xAxis = d3.svg.axis()
-        .scale(x)
-        .orient('bottom')
-        .ticks(5);
+    	// draw the x axis
+    	var xAxis = d3.svg.axis()
+        	.scale(x)
+        	.orient('bottom')
+        	.ticks(5);
 
-    var xAxisNodes = main.append('g')
-        .attr('transform', 'translate(0,' + height + ')')
-        .attr('class', 'main axis date')
-	.call(xAxis);
+    	var xAxisNodes = main.append('g')
+        	.attr('transform', 'translate(0,' + height + ')')
+        	.attr('class', 'main axis date')
+		.call(xAxis);
 
-    xAxisNodes.selectAll('.axis line, .axis path')
-        .style({'stroke': 'Black', 'fill': 'none', 'stroke-width': '1px'});
+    	xAxisNodes.selectAll('.axis line, .axis path')
+        	.style({'stroke': 'Black', 'fill': 'none', 'stroke-width': '1px'});
 
-    // x axis label	
-    chart.append("text")
-        .attr("class", "x axis-label label")
-        .attr("text-anchor", "end")
-        .attr("x", width + margin.left)
-        .attr("y", height + margin.bottom)
+    	// x axis label	
+    	chart.append("text")
+        	.attr("class", "x axis-label label")
+        	.attr("text-anchor", "end")
+        	.attr("x", width + margin.left)
+        	.attr("y", height + margin.bottom)
         .text(xLabel);
 
 
-    // draw the y axis
-    var yAxis = d3.svg.axis()
-    .scale(y)
-    .orient('left')
-    .ticks(5);
+    	// draw the y axis
+    	var yAxis = d3.svg.axis()
+    		.scale(y)
+    		.orient('left')
+    		.ticks(5);
 
-    var yAxisNodes = main.append('g')
-    .attr('transform', 'translate(0,0)')
-    .attr('class', 'main axis date')
-    .call(yAxis);
+    	var yAxisNodes = main.append('g')
+    		.attr('transform', 'translate(0,0)')
+    		.attr('class', 'main axis date')
+    		.call(yAxis);
 
-    yAxisNodes.selectAll('.axis line, .axis path')
-        .style({'stroke': 'Black', 'fill': 'none', 'stroke-width': '1px'});
+    	yAxisNodes.selectAll('.axis line, .axis path')
+        	.style({'stroke': 'Black', 'fill': 'none', 'stroke-width': '1px'});
     
-    // y axis label
-    chart.append("text")
-        .attr("class", "y axis-label label")
-        .attr("text-anchor", "end")
-        .attr("x", -margin.top)
-	.attr("y", 4)
-        .attr("dy", ".75em")
-        .attr("transform", "rotate(-90)")
-        .text(yLabel);
+    	// y axis label
+    	chart.append("text")
+        	.attr("class", "y axis-label label")
+        	.attr("text-anchor", "end")
+        	.attr("x", -margin.top)
+		.attr("y", 4)
+        	.attr("dy", ".75em")
+        	.attr("transform", "rotate(-90)")
+        	.text(yLabel);
 
-    var g = main.append("svg:g"); 
+    	var g = main.append("svg:g"); 
 
-    g.selectAll("scatter-dots")
-    .data(data)
-    .enter().append("svg:circle")
-    .attr("id", function (d) { return "set"+d.set_id.replace(/\./g, "-"); } )
-    .attr("cx", function (d) { return x(xGetter(d)); } )
-    .attr("cy", function (d) { return y(yGetter(d)); } )
-    .attr("fill", '#559')
-    .attr("opacity", 0.4)
-    .attr("r", 3);
+    	g.selectAll("scatter-dots")
+    		.data(data)
+    		.enter()
+		.append("svg:circle")
+    		.attr("id", function (d) { return "set"+d.set_id.replace(/\./g, "-"); })
+    		.attr("cx", function (d) { return x(xGetter(d)); })
+    		.attr("cy", function (d) { return y(yGetter(d)); } )
+    		.attr("fill", '#559')
+    		.attr("opacity", 0.4)
+    		.attr("r", 3);
 }
+//////////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////// Loading Data ////////////////////////////////////////
 legoData.onDataLoad = function() {
     
     console.log("custom function!");
@@ -233,70 +264,69 @@ legoData.onDataLoad = function() {
 	    "Year", 
 	    "Type Percentage");
   
-//    appendScatterplot(
-//	    data2,
-//            function(d) { return d.setInfo.pieces; },
-//            function(d) { return d.mostPieceType.typeCount; },
-//	    "Number of Pieces in Set",
-//	    "Number of Most Type Pieces in Set");
+   	/////////////////////////// Interactions/////////////////////
 
-//    appendScatterplot(
-//	    data2,
-//            function(d,i) { return d.mostPieceColor.colorPct; },
-//            function(d,i) { return d.mostPieceType.typePct; },
-//	    "Color Percentage", 
-//	    "Type Percentage");
-
-//Interactions
-
-
-    var svg = d3.selectAll("svg");
-    var id = 0;
-    var node = svg.selectAll("circle");
-    var path = node
-    .data(data2)
-    .enter().append("circle");
+    	// Some Global Vars
+    	var svg = d3.selectAll("svg");
+    	var prev = "";
+	//var selection =[];
+	//var id = 0;
+	var p = 0;
+    	var node = svg.selectAll("circle");
+    	var searchInfo = "";
+    	var path = node
+    		.data(data2)
+    		.enter()
+		.append("circle");
    
-    // mousing over highlights a point
-    node.on("click", function(d,i){
+    	// clicking a point highlights it
+    	node.on("click", function(d,i){
 	 if( id != 0){
 	     d3.select("table").remove();
-	     d3.selectAll("#set"+id)  
-	    	.moveToBack()
-	    	.attr("fill", '#559')
-    	    	.attr("opacity", 0.4)
-     	    	.attr("r", 3);
+	     d3.select("#set-logo").remove();
+	     removeHighlight(id);
 	 }
+	 p = this;
 	 id = d.set_id;
  	 d3.selectAll("#set"+id)
 	    .moveToFront()
 	    .attr("fill", 'Lime')
     	    .attr("opacity", 1)
      	    .attr("r", 6);
-       var setTable = tabulate(d,i);		
-    
-      });
+       	var setTable = tabulate(d,i);		    
+      	});
 
-    // mousing out removes highlight
-    d3.selectAll("#background_click").on("click", function(d,i){
-	 // path.filter(function (thisData) { return d === thisData; })
-	    if( id != 0){
+    	// mousing out removes highlight
+    	d3.selectAll("#background_click").on("click", function(d,i){
 	      d3.select("table").remove();
-	      d3.selectAll("#set"+id)  
-	    	.moveToBack()
+	      d3.select("#set-logo").remove();	      
+	      d3.selectAll("circle")  
 	    	.attr("fill", '#559')
     	    	.attr("opacity", 0.4)
-     	    	.attr("r", 3);}
-    });
+     	    	.attr("r", 3);
+    	});
 
-    
+    // Helper function to remove colors on points	
+    function removeHighlight(id){
+	  var isSelected = selection.indexOf(id) > -1;  
+	  d3.selectAll("#set"+id)
+	    	.moveToBack()
+		.attr("fill", function(){
+				return colorPoints(id, isSelected)})
+    	    	.attr("opacity", function(){
+		 	return isSelected ? 1 : 0.4; 	
+		})
+     	    	.attr("r", 3);
+    }
+ 
+    // Helper function to bring a point to the front of the svg
     d3.selection.prototype.moveToFront = function() {
 	return this.each(function(){
 	    this.parentNode.appendChild(this);
 	  });
     };
 
-	
+    // Helper function to move a point to the back of the svg
     d3.selection.prototype.moveToBack = function() { 
 	 return this.each(function() { 
 		var firstChild = this.parentNode.firstChild; 
@@ -306,81 +336,128 @@ legoData.onDataLoad = function() {
 	 }); 
      };
 
-
-    var searchInfo = "";
-
-
-
-	// when the input range changes update value 
+    //////////////////////// User Search ////////////////////////////////////
+	// Get User's search value 
 	d3.select("#search").on("keyup", function() {
-	 searchInfo = this.value 
-	  console.log(this.value);
+	 	searchInfo = this.value.toLowerCase(); 
 	});
-	var prev = "";
+	
+	// Search for sets by set_id
+	d3.select("#search-setid").on("click", function(){
+		if (searchInfo != ""){
+     	  	selection =[];
+	  	for (i=0; i< data2.length; i++){
+		  if ( data2[i].set_id.toLowerCase().substring(0,searchInfo.length) 
+			  == searchInfo) 
+			selection.push(data2[i].set_id) 
+	  	  }
+	   	  findSets(selection);
+		}
+	});
 
-	// adjust the text
-	d3.select("#search-button").on("click", function(){
-	  // do something...
-	if (searchInfo == "") ;
-	else{
-     		var selection =[];
-	  for (i=0; i< data2.length; i++){
-		  if ( data2[i].set_id.substring(0,searchInfo.length) == searchInfo) selection.push(data2[i].set_id)
-	  	if (data2[i].setInfo.t1.toLowerCase().indexOf(searchInfo.toLowerCase()) >-1) selection.push(data2[i].set_id);
-	  
-	  }
-	  if( prev != ""){
-	  for (j =0; j< prev.length; j++){
+	// Search for sets by piece_id
+	d3.select("#search-pieceid").on("click", function(){
+		var setPieces =legoData.setPiecesArray();
+		if (searchInfo != ""){
+    	  	selection =[];
+	  	for (i=0; i< setPieces.length; i++){
+		  if ( setPieces[i].piece_id.
+			  substring(0,searchInfo.length) == searchInfo) 
+			selection.push(setPieces[i].set_id); 
+	  	  }
+	  	  findSets(selection);
+		}
+	});
+
+	// Search for sets by word in descr or category (t1)
+	d3.select("#search-descr").on("click",function(){
+		if (searchInfo != ""){
+     	  	selection =[];
+	  	for (i=0; i< data2.length; i++){
+		  var string = searchInfo.toLowerCase();
+	    	  if (data2[i].setInfo.t1.toLowerCase().indexOf(string) >-1
+			|| data2[i].setInfo.descr.toLowerCase().indexOf(string) >-1) 
+			selection.push(data2[i].set_id);
+	  	  }
+	  	  findSets(selection);
+		}
+	});
+
+	// Helper function for searching sets and coloring points 
+	function findSets(selection){
+	  	for (j =0; j< prev.length; j++){
+		  var isSelected = selection.indexOf(id) > -1;
 		  d3.selectAll("#set"+prev[j])
-		.moveToBack()
-		.attr("fill", "#559")
-		.attr("opacity", 0.4);}}
-	  //if (selection.length ==0) d3.select("#search-value").html("No Results Found");
-	  else{
-	  for (j=0; j< selection.length; j++){
-	  d3.selectAll("#set"+selection[j])
-		.moveToFront()
-		.attr("fill", "#FFFF00")
-		.attr("opacity", 1);
-	  prev = selection;
-	  }}}
-        });		  
-		  
-		  
-		  
-		  
-		  
-		  
+		    //.moveToBack()
+		    .attr("fill", colorPoints(prev[j], isSelected))
+		    .attr("opacity", function(){
+			    return isSelected ? 1: 0.4;});
+		}
+	  	if (selection.length ==0){ 
+		  d3.select("#noResult").remove();
+		  d3.select("#buttons")
+		    .append("p")
+		    .attr("id", "noResult")
+		    .html("No Results Found");
+		}
+	  	else{
+		  d3.select("#noResult").remove();
+	  	  for (j=0; j< selection.length; j++){
+	  	    d3.selectAll("#set"+selection[j])
+		      .moveToFront()
+		      .attr("fill", "#FFFF00")
+		      .attr("opacity", 1)
+		      .attr("r", 3);
+		  }
+		  prev = selection;
+	  	}
+	}	
 
-
-
-
+	// Helper function to color points
+	function colorPoints(id, isSelected){
+		if (isSelected) { return '#FFFF00';}
+		else{
+		if(e != undefined){
+		  var e00 = e[0][0] - margin.left;
+		  var e10 = e[1][0] - margin.left;
+		  var e01 = e[0][1] - margin.top;
+		  var e11 = e[1][1] - margin.top;
+		  var extent = d3.selectAll(".extent")[0];
+	  	  extent.filter(function(value){ return value.width.baseVal.value !=0});
+		  var chartId = extent[0].parentNode.parentNode.id;	  
+		  var a = d3.select("#"+chartId).select("#set"+id);
+		  var x = a.attr("cx");
+		  var y = a.attr("cy");
+		  var notInBrush = e00 > x || x > e10 || e01 > y || y > e11;
+		}
+		else notInBrush = true;
+		if (!notInBrush) return "red";
+		else return "#559";
+		}
+	}
 
 };
+//////////////////////////////////////////////////////////////////////////////////////
 
+// CAll Function to load the data
 legoData.loadAllData();
 
-
+///////////////////////// Function to create the data ////////////////////////////
 function createData(){
-
     var data = [];
     var sets = legoData.setsArray();
     var index = 0;
 
- //pieceDescrAvg, pieceDescrMax, pieceDescrMin, mostPieceCat.	
-
-
-    for (i=0; i< sets.length; i++){
-	 
-	 var  setPieces = legoData.setPieces[sets[i].set_id];
-       	 var pieces = [];
-         var pieceCount = 0;
-         var pieceTypes = [];
-	 var pieceColors = [];
-	 var pieceCats = [];
-	 var pieceDescr = 0;
-	 var allPieceColor = [];
-	 var colorCount=[];
+    for (i=0; i< sets.length; i++){	 
+	var  setPieces = legoData.setPieces[sets[i].set_id];
+       	var pieces = [];
+        var pieceCount = 0;
+        var pieceTypes = [];
+	var pieceColors = [];
+	var pieceCats = [];
+	var pieceDescr = 0;
+	var allPieceColor = [];
+	var colorCount=[];
 
 	 if(setPieces != undefined){
 	   for (j=0; j< setPieces.length; j++){	
@@ -452,29 +529,25 @@ function createData(){
 	 }
     }
     return data;
-
 }
 
 //function to find all max elements of two linked arrays
 function arrayMode(arr) {
-    var a = [], b = [], prev;
-
-    arr.sort();
-    for ( var i = 0; i < arr.length; i++ ) {
-        if ( arr[i] !== prev ) {
-            a.push(arr[i]);
-            b.push(1);
-        } else {
-            b[b.length-1]++;
-        }
-        prev = arr[i];
-    }
-
-    return [a, b];
+    	var a = [], b = [], prev;
+	arr.sort();
+    	for ( var i = 0; i < arr.length; i++ ) {
+		if ( arr[i] !== prev ) {
+		    a.push(arr[i]);
+		    b.push(1);
+		} else {
+		    b[b.length-1]++;
+		}
+		prev = arr[i];
+	}
+    	return [a, b];
 }
 
-
-    // The table generation function
+    ////////////////////////// Table generation function //////////////////////
     function tabulate(d,i) {
       var setData = [
 	["Set ID: ",  d.set_id.replace(/\./g,"-") ],
@@ -492,20 +565,6 @@ function arrayMode(arr) {
 	["Most Piece Type Percentage: ", d.mostPieceType.typePct.toFixed(2)+"%"]
 		];
 
-      var table = d3.select("#info-table-wrapper").append("table")
-   		.attr("id", "info-table")
-   		.style("display", "inline-block")
-		.selectAll("tr")
-        	.data(setData)
-	        .enter()
- 	       	.append("tr")
-		.selectAll("td")
-		.data(function(d){return d;})
-		.enter()
-		.append("td")
-		.style("border", "1px black solid")
-		.text(function(d){return d;});
-
       // Clear image
       d3.select("#set-logo").remove();
 
@@ -518,15 +577,29 @@ function arrayMode(arr) {
    		.style("border", "2px black solid")
         .attr("src", "download/img/sets/" + d.set_id + ".jpg")
         .attr("alt", "Lego set image");
-    }
+ 
+      var table = d3.select("#info-table-wrapper").append("table")
+   		.attr("id", "info-table")
+   		.style("display", "inline-block")
+		.selectAll("tr")
+        	.data(setData)
+	        .enter()
+ 	       	.append("tr")
+		.selectAll("td")
+		.data(function(d){return d;})
+		.enter()
+		.append("td")
+		.style("border", "1px black solid")
+		.text(function(d){return d;});      
+   }
 
 function arrayString(aray){
-    var string = "";	   
-    for (i=0; i< aray.length; i++){
-	string = string + aray[i];
-	(i == aray.length-1) ?
+    	var string = "";	   
+    	for (i=0; i< aray.length; i++){
+	  string = string + aray[i];
+	  (i == aray.length-1) ?
 		string = string : string = string + ", ";
-    }
-    return string;
+    	}
+    	return string;
 }
 
