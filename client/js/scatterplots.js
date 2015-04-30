@@ -466,11 +466,8 @@ function tabulate(d,i) {
         ["Most Piece Type Percentage: ", d.mostPieceType.typePct.toFixed(2)+"%"]
     ];
 
-    //var table = d3.select("#info-table-wrapper").html("");
     d3.select("#info-table-wrapper").select("#set-logo").remove();
-
-    // Clear image
-    d3.select("#set-logo").remove();
+    d3.select("#info-table-wrapper").select("#info-table").remove();
 
     // Show the image for the set
     d3.select("#info-table-wrapper").append("img")
