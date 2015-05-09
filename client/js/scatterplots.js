@@ -1,5 +1,6 @@
 //"Code Folding Settings in _vimrc
 //"from VIM use e: $MYVIMRC
+
 //set foldmethod=indent   "fold based on indent
 //set foldnestmax=10      "deepest fold is 10 levels
 //set nofoldenable        "dont fold by default
@@ -15,19 +16,24 @@ var margin = {top: 20, right: 15, bottom: 50, left: 50},
 var brushCell;
 var selection = []; 	// array of points selected by search
 var e; 			// extent of brush
-var id = "";		// set_id of clicked point
+var clicked_set_id = "";		// set_id of clicked point
 
 var svg = d3.selectAll("svg");	
 //////////////////////////////////////////////////////////////////
 
 //////////////////// Function when starting brush //////////////////
-function brushstart(){
+function brushstart() {
 	if(brushCell !== this){
     		d3.selectAll(".brush").call(brush.clear());
     		brushCell = this;
     		d3.selectAll("circle")
       		.classed("hidden", function(d) { return false; });
-    	}
+    }
+    
+    // Reset all points to blue
+    d3.selectAll("circle")
+        .attr("fill", "#559"); 
+    highlightClickedPoint();
 }
 
 // Function when brush ends
@@ -39,35 +45,38 @@ function brushend() {
     		d3.selectAll("circle")
 			.attr("fill", "#559")
 			.attr("r", 3)
-			.attr("opacity", 0.4);
-  	}
+			.attr("opacity", 0.2);
+  	} else {
+        e = brush.extent();
+        var e00 = e[0][0] - margin.left;
+        var e10 = e[1][0] - margin.left;
+        var e01 = e[0][1] - margin.top;
+        var e11 = e[1][1] - margin.top;
+                
+        d3.select(this.parentNode)
+            .selectAll("circle")
+            .attr("fill", "#559"); 
+        
+        d3.select(this.parentNode)
+                .selectAll("circle")
+                .classed("hidden", function(d) {
+                var p = d3.select(this); // SLOW
+                var x = p.attr("cx");
+                var y = p.attr("cy");
+                var notInBrushRange = e00 > x || x > e10 || e01 > y || y > e11;
+                if (!notInBrushRange) {
+                    d3.selectAll("#" + p.attr("id"))
+                        .attr("fill", "red"); // SLOW
+                } 
+                return false;
+            });
+    }
+    highlightClickedPoint();
 }
  
 // Function when brush moves
 function brushed() {
- 	 e = brush.extent();
-  	var e00 = e[0][0] - margin.left;
-  	var e10 = e[1][0] - margin.left;
-  	var e01 = e[0][1] - margin.top;
-  	var e11 = e[1][1] - margin.top;
-  	
-  	d3.select(this.parentNode)
-    		.selectAll("circle")
-    		.classed("hidden", function(d) {
-			var p = d3.select(this); // SLOW
-        		var x = p.attr("cx");
-        		var y = p.attr("cy");
-        		var notInBrushRange = e00 > x  || x > e10 || e01 > y  || y > e11;
-        		var isSelected = selection.indexOf(p.attr("id").substring(3)) > -1;
-			if (isSelected == true || p.attr("id").substring(3) == id);//SLOW
-			else if (!notInBrushRange) {
-            			d3.selectAll("#" + p.attr("id"))
-					.moveToFront()
-					.attr("fill", "red"); // SLOW
-        		} 
-			else d3.selectAll("#" + p.attr("id")).attr("fill", "#559"); 
-        		return false;
-    	});
+    // Don't do anything
 }
 
 // Create a brush on all svg elements
@@ -209,7 +218,7 @@ var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
     		.attr("cx", function (d) { return x(xGetter(d)); })
     		.attr("cy", function (d) { return y(yGetter(d)); } )
     		.attr("fill", '#559')
-    		.attr("opacity", 0.4)
+    		.attr("opacity", 0.2)
     		.attr("r", 3);
 }
 //////////////////////////////////////////////////////////////////////////////////
@@ -269,7 +278,7 @@ legoData.onDataLoad = function() {
     	// Some Global Vars
     	var svg = d3.selectAll("svg");
 	//var selection =[];
-	//var id = 0;
+	//var clicked_set_id = 0;
 	var p = 0;
     	var node = svg.selectAll("circle");
     	var searchInfo = "";
@@ -280,19 +289,7 @@ legoData.onDataLoad = function() {
    
     	// clicking a point highlights it
     	node.on("click", function(d,i){
-	 if( id != 0){
-	     d3.select("table").remove();
-	     d3.select("#set-logo").remove();
-	     removeHighlight(id);
-	 }
-	 p = this;
-	 id = d.set_id;
- 	 d3.selectAll("#set"+id)
-	    .moveToFront()
-	    .attr("fill", 'Lime')
-    	    .attr("opacity", 1)
-     	    .attr("r", 6);
-       	var setTable = tabulate(d,i);		    
+            updateClickedSet(d,i);
       	});
 
     	// mousing out removes highlight
@@ -301,23 +298,10 @@ legoData.onDataLoad = function() {
 	      d3.select("#set-logo").remove();	      
 	      d3.selectAll("circle")  
 	    	.attr("fill", '#559')
-    	    	.attr("opacity", 0.4)
+    	    	.attr("opacity", 0.2)
      	    	.attr("r", 3);
     	});
 
-    // Helper function to remove colors on points	
-    function removeHighlight(id){
-	  var isSelected = selection.indexOf(id) > -1;  
-	  d3.selectAll("#set"+id)
-	    	.moveToBack()
-		.attr("fill", function(){
-				return colorPoints(id, isSelected)})
-    	    	.attr("opacity", function(){
-		 	return isSelected ? 1 : 0.4; 	
-		})
-     	    	.attr("r", 3);
-    }
- 
     // Helper function to bring a point to the front of the svg
     d3.selection.prototype.moveToFront = function() {
 	return this.each(function(){
@@ -547,22 +531,18 @@ function setUpSearch(data2){
 
 	// Helper function for searching sets and coloring points 
 	function findSets(selection){
-	  	for (j =0; j< prev.length; j++){
-		  var isSelected = selection.indexOf(id) > -1;
-		  d3.selectAll("#set"+prev[j])
-		    //.moveToBack()
-		    .attr("fill", colorPoints(prev[j], isSelected))
-		    .attr("opacity", function(){
-			    return isSelected ? 1: 0.4;});
-		}
-	  	if (selection.length ==0){ 
+        
+        d3.selectAll("circle")
+            .attr("fill", "#559"); 
+        
+	  	if (selection.length ==0) {
 		  d3.select("#noResult").remove();
 		  d3.select("#buttons")
 		    .append("p")
 		    .attr("id", "noResult")
 		    .html("No Results Found");
 		}
-	  	else{
+	  	else {
 		  d3.select("#noResult").remove();
 	  	  for (j=0; j< selection.length; j++){
 	  	    d3.selectAll("#set"+selection[j])
@@ -573,39 +553,58 @@ function setUpSearch(data2){
 		  }
 		  prev = selection;
 	  	}
+        highlightClickedPoint();
 	}	
 }
 
 // Helper function to color points
 function colorPoints(id, isSelected){
-    if (isSelected) { return '#FFFF00';}
-    else{
-    if(e != undefined){
-      var e00 = e[0][0] - margin.left;
-      var e10 = e[1][0] - margin.left;
-      var e01 = e[0][1] - margin.top;
-      var e11 = e[1][1] - margin.top;
-      var extent = d3.selectAll(".extent")[0];
-      extent.filter(function(value){ return value.width.baseVal.value !=0});
-      var chartId = extent[0].parentNode.parentNode.id;	  
-      var a = d3.select("#"+chartId).select("#set"+id);
-      var x = a.attr("cx");
-      var y = a.attr("cy");
-      var notInBrush = e00 > x || x > e10 || e01 > y || y > e11;
-    }
-    else notInBrush = true;
-    if (!notInBrush) return "red";
-    else return "#559";
-    }
+    if (isSelected) { 
+        return '#FFFF00';
+    } 
 }
 
 function arrayString(aray){
-    	var string = "";	   
-    	for (i=0; i< aray.length; i++){
-	  string = string + aray[i];
-	  (i == aray.length-1) ?
-		string = string : string = string + ", ";
-    	}
-    	return string;
+    var string = "";	   
+    for (i=0; i< aray.length; i++) {
+        string = string + aray[i];
+        (i == aray.length-1) ? string = string : string = string + ", ";
+    }
+    return string;
 }
+    	
+// Highlight clicked point
+function updateClickedSet(d,i){
+    if(clicked_set_id != d.set_id){
+        d3.select("table").remove();
+        d3.select("#set-logo").remove();
+        removeHighlight(clicked_set_id);
+        var setTable = tabulate(d,i);		    
+    }
+    clicked_set_id = d.set_id;
+    highlightClickedPoint();
+};
+
+function highlightClickedPoint() {
+    d3.selectAll("#set"+clicked_set_id)
+        .moveToFront()
+        .attr("fill", 'Lime')
+        .attr("opacity", 1)
+        .attr("r", 6);
+}
+
+// Helper function to remove colors on points	
+function removeHighlight(id){
+    var isSelected = selection.indexOf(id) > -1;  
+    d3.selectAll("#set"+id)
+        .moveToBack()
+        .attr("fill", function(){
+            return colorPoints(id, isSelected)
+        })
+        .attr("opacity", function(){
+            return isSelected ? 1 : 0.2; 	
+        })
+        .attr("r", 3);
+}
+
 

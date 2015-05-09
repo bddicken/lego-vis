@@ -64,15 +64,31 @@ function download(filename, text) {
     document.body.removeChild(pom);
 }
 
-var getTSNEInitialGraph = function () {
-  
-    var descs_tokens = {};
-    var all_tokens = {};
-    
-    var result = {};
-    result['words'] = [];
-    result['vecs'] = [];
+var getTSNEInitialGraphBetter = function () {
+ 
+    // ( map of category -> ( map of token -> count ) )
+    var category_token_map = {};
 
+    // populate category_map_token
+    for (var i in legoData.sets) {
+        var set = legoData.sets[i];
+        var tokens = set.descr.split(/([_\W])/);
+        if(category_token_map[set.t1] == undefined) {
+            category_token_map[set.t1] = {};
+        }
+        for (var j in tokens) {
+            if(category_token_map[set.t1][tokens[j]] == undefined) {
+                category_token_map[set.t1][tokens[j]] = 0; 
+            }
+            category_token_map[set.t1][tokens[j]]++; 
+        }
+    }
+
+    console.log(JSON.stringify(category_token_map));
+    console.log(Object.keys(category_token_map).length);
+
+    var descs_tokens = {};
+    
     // populate "descs" with map of set_id -> description string
     for (var i in legoData.sets) {
         var descr = "";
@@ -94,36 +110,34 @@ var getTSNEInitialGraph = function () {
             return tokens.indexOf(elem) == pos;
         });
         descs_tokens[i] = unique_tokens;
-
-        // update token counts
-        for (var j in unique_tokens) {
-            var t = unique_tokens[j];
-            if (!(t in all_tokens)) { all_tokens[t] = 0; }
-            all_tokens[t]++;
-        }
-
     }
 
-    // Remove elements below threshold
-    for (var i in all_tokens) {
-        if (all_tokens[i] < 80)
-            delete all_tokens[i];
-    }
+    
+    //var keys = console.log(Object.keys(category_token_map).length);
 
-    var keys = Object.keys(all_tokens);
+    var result = {};
+    result['words'] = [];
+    result['vecs'] = [];
+
+    //var keys = Object.keys(all_tokens);
     var counter = 0;
 
     for (var i in descs_tokens) {
         
         var t = descs_tokens[i]; 
-        var tm = {};
         var vector = [];
-        
-        for (var j in t) { tm[t[j]] = 0; };
 
-        for (var k in keys) {
-            if (keys[k] in tm) { vector.push(99); }
-            else { vector.push(10); }
+        // for each category
+        for (var j in category_token_map) {
+            category_map = category_token_map[j];
+            // for each token in set
+            for (var k in t) {
+                set_key = t[k];
+
+                if (set_key in category_map) {
+                    vector.push(category_map[set_key]);
+                }
+            }
         }
         
         result['words'].push(legoData.sets[i]);
@@ -135,6 +149,7 @@ var getTSNEInitialGraph = function () {
     console.log("initial input computed.");
     return result;
 }
+
 
 
 appendVectorGraph = function(data) {
@@ -168,7 +183,11 @@ appendVectorGraph = function(data) {
 var legoData = initLegoData('..')
 legoData.onDataLoad = function() {
     console.log("custom function!");
-    var data = getTSNEInitialGraph();
+    var data = getTSNEInitialGraphBetter();
+    
+    //console.log(JSON.stringify(data));
+    //return;
+    
     var allSets = d3.select("#plot");
     appendVectorGraph(data);
 };
