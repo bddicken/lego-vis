@@ -17,6 +17,7 @@ var brushCell;
 var selection = []; 	// array of points selected by search
 var e; 			// extent of brush
 var clicked_set_id = "";		// set_id of clicked point
+var clicked_color = "";
 
 var svg = d3.selectAll("svg");	
 //////////////////////////////////////////////////////////////////
@@ -32,7 +33,9 @@ function brushstart() {
     
     // Reset all points to blue
     d3.selectAll("circle")
-        .attr("fill", "#559"); 
+        .attr("fill", "#559")
+	.attr("opacity", 0.2);
+    selection = []; 
     highlightClickedPoint();
 }
 
@@ -46,7 +49,8 @@ function brushend() {
 			.attr("fill", "#559")
 			.attr("r", 3)
 			.attr("opacity", 0.2);
-  	} else {
+  		clicked_set_id = ""; clicked_color = "";
+	} else {
         e = brush.extent();
         var e00 = e[0][0] - margin.left;
         var e10 = e[1][0] - margin.left;
@@ -55,7 +59,8 @@ function brushend() {
                 
         d3.select(this.parentNode)
             .selectAll("circle")
-            .attr("fill", "#559"); 
+            .attr("fill", "#559")
+	    .attr("opacity", 0.2); 
         
         d3.select(this.parentNode)
                 .selectAll("circle")
@@ -71,7 +76,7 @@ function brushend() {
                 return false;
             });
     }
-    highlightClickedPoint();
+    if(clicked_set_id != undefined || clicked_set_id != "") highlightClickedPoint();
 }
  
 // Function when brush moves
@@ -292,6 +297,18 @@ legoData.onDataLoad = function() {
             updateClickedSet(d,i);
       	});
 
+	//for (j =0; j<9; j++){
+	d3.selectAll(".image").on("click", function(d,j){
+	    var stringId=d3.select("#banner_image"+j).attr('src');
+	    stringId = stringId.substring(19,stringId.length -4);
+	    console.log(stringId);
+	    for (i=0; i< data2.length; i++){
+	   	if(data2[i].set_id ==stringId) var d = data2[i];}
+	    console.log(d);
+	    updateClickedSet(d,i);
+		});
+	
+
     	// mousing out removes highlight
     	d3.selectAll("#background_click").on("click", function(d,i){
 	      d3.select("table").remove();
@@ -320,6 +337,8 @@ legoData.onDataLoad = function() {
      };
 
     setUpSearch(data2);
+
+
 
 };
 //////////////////////////////////////////////////////////////////////////////////////
@@ -533,7 +552,8 @@ function setUpSearch(data2){
 	function findSets(selection){
         
         d3.selectAll("circle")
-            .attr("fill", "#559"); 
+            .attr("fill", "#559")
+	    .attr("opacity", 0.2); 
         
 	  	if (selection.length ==0) {
 		  d3.select("#noResult").remove();
@@ -542,7 +562,7 @@ function setUpSearch(data2){
 		    .attr("id", "noResult")
 		    .html("No Results Found");
 		}
-	  	else {
+		else {
 		  d3.select("#noResult").remove();
 	  	  for (j=0; j< selection.length; j++){
 	  	    d3.selectAll("#set"+selection[j])
@@ -550,6 +570,13 @@ function setUpSearch(data2){
 		      .attr("fill", "#FFFF00")
 		      .attr("opacity", 1)
 		      .attr("r", 3);
+		  }
+		  if (selection.length == 1){
+		  	for (i=0; i < data2.length; i++){
+			  if (data2[i].set_id == selection[0]){
+				  tabulate(data2[i], i);
+			  	  return;}
+		  	}
 		  }
 		  prev = selection;
 	  	}
@@ -582,6 +609,7 @@ function updateClickedSet(d,i){
         var setTable = tabulate(d,i);		    
     }
     clicked_set_id = d.set_id;
+    clicked_color = d3.select("#set"+clicked_set_id).attr("fill");
     highlightClickedPoint();
 };
 
@@ -599,7 +627,7 @@ function removeHighlight(id){
     d3.selectAll("#set"+id)
         .moveToBack()
         .attr("fill", function(){
-            return colorPoints(id, isSelected)
+            return clicked_color;//colorPoints(id, isSelected)
         })
         .attr("opacity", function(){
             return isSelected ? 1 : 0.2; 	
