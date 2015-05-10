@@ -1,8 +1,13 @@
+// TODO: re-org whole file. Wrap it all in an anonymous function.
+
 tsnePlot = (function() {
 
 var container = d3.select("body").append("span");
 
-appendVectorGraph = function(containerSelection, data, dimension, totalWidth, totalHeight) {
+appendVectorGraph = function(containerSelection, allData, dimension, totalWidth, totalHeight) {
+
+    allDataKeys = Object.keys(allData);
+    var data = allData['Star Wars'];
 
     console.log("appending graph!");
 
@@ -28,9 +33,39 @@ appendVectorGraph = function(containerSelection, data, dimension, totalWidth, to
             brushCell = this;
         }
     }
+    
+    var svg = containerSelection.append("svg") // svg is global
+        .style("display", "inline")
+        .attr("width", width)
+        .attr("height", height);
+    
+    var containerGroup = svg
+        .append("g")
+        .attr("class", "cont");
 
-    // TODO: remove duplication in this function between here and scatterplots.js
     var brushmove = function(p) {
+        /*
+        var e = brush.extent();
+        var b00 = e[0][0]; 
+        var b01 = e[0][1];
+        var b10 = e[1][0];
+        var b11 = e[1][1];
+        
+        d3.selectAll("circle").attr("fill", '#559');
+        
+        svg.selectAll("circle").classed("hidden", function(d, i) {
+            var xp = ((data.output[i][0]*20*ss + tx) + 400);
+            var yp = ((data.output[i][1]*20*ss + ty) + 400) * (-1) + height;
+            var value = b00 > xp || xp > b10 || b01 > yp || yp > b11;
+            if (!value) { 
+                d3.selectAll("#set" + d.set_id.replace(/\./g, "-")).attr("fill", "red"); // SLOW
+            }
+            return false;
+        });
+        */
+    }
+
+    var brushend = function(p) {
 
         var e = brush.extent();
         var b00 = e[0][0]; 
@@ -49,9 +84,8 @@ appendVectorGraph = function(containerSelection, data, dimension, totalWidth, to
             }
             return false;
         });
-    }
 
-    var brushend = function(p) {
+
         if (brush.empty()) svg.selectAll(".hidden").classed("hidden", false);
         //console.log("players = " + JSON.stringify(players));
     }
@@ -92,7 +126,7 @@ appendVectorGraph = function(containerSelection, data, dimension, totalWidth, to
       svg.selectAll("set-t1")
         .data(catsa).enter().append("text")
         .attr("class", "set-t1 shadow")
-        .attr("font-size", 18)
+        .attr("font-size", 22)
         .attr("text-anchor", "top")
         .style("fill", "OrangeRed")
         .style("font-weight", "bold")
@@ -105,24 +139,25 @@ appendVectorGraph = function(containerSelection, data, dimension, totalWidth, to
     var updateEmbedding = function(show_text) {
 
       // TODO: cleanup circle/text pairing
-      var datapoints = svg.selectAll("circle")
+      svg.selectAll("image")
           .data(data.input.words)
+          .attr("width", "30px")
+          .attr("height", "30px")
+          .attr("xlink:href", function(d) { return "download/img/sets/" + d.set_id + ".jpg"; })
           .on("click", function(d) { 
-                // TODO: THIS IS HACKY!!!
-                d3.selectAll("#set" + d.set_id.replace(/\./g, "-"))
-                  .classed("YOLO", function(d, i) {
-                    if (i == 2)
-                        tabulate(d, i); 
-                  });
-          }) 
-          .attr("cx",
-              function(d,i) { 
-                return ((data.output[i][0]*20*ss + tx) + 400);
-              })
-          .attr("cy",
-              function(d,i) { 
-                return ((data.output[i][1]*20*ss + ty) + 400);
+            // TODO: THIS IS HACKY!!!
+            d3.selectAll("#set" + d.set_id.replace(/\./g, "-"))
+              .classed("YOLO", function(d, i) {
+                if (i == 2)
+                    tabulate(d, i); 
               });
+          }) 
+          .attr("x", function(d,i) { 
+            return ((data.output[i][0]*20*ss + tx) + 400);
+          })
+          .attr("y", function(d,i) { 
+            return ((data.output[i][1]*20*ss + ty) + 400);
+          });
 
       if (show_text) {
           
@@ -137,13 +172,18 @@ appendVectorGraph = function(containerSelection, data, dimension, totalWidth, to
             .attr("text-anchor", "top")
             .attr("text-anchor", "top")
             .attr("font-size", 12)
-            .style("opacity", 1.0)
-            .text(function(d) { return d.descr; })
+            .style("opacity", 0.8)
+            .text(function(d) { 
+                if (d.descr.length > 10) {
+                    return d.descr.substr(0, 20) + "...";
+                }
+                return d.descr; 
+            })
             .attr("x", function(d,i) { 
-                return ((data.output[i][0]*20*ss + tx) + 400) + 6;
+                return ((data.output[i][0]*20*ss + tx) + 400) + 30;
             })
             .attr("y", function(d,i) { 
-                return ((data.output[i][1]*20*ss + ty) + 400) + 6;
+                return ((data.output[i][1]*20*ss + ty) + 400) + 15;
             });
           
             displayGroups();
@@ -158,43 +198,17 @@ appendVectorGraph = function(containerSelection, data, dimension, totalWidth, to
         tx = d3.event.translate[0];
         ty = d3.event.translate[1];
         ss = d3.event.scale;
-        updateEmbedding(ss > 4);
+        updateEmbedding(ss > 2.5);
     }
-    
-    var svg = containerSelection.append("svg") // svg is global
-        .style("display", "inline")
-        .attr("width", width)
-        .attr("height", height);
-    
-    var containerGroup = svg
-        .append("g")
-        .attr("class", "cont");
-
-    var g = containerGroup.selectAll(".b")
-        .data(data.input.words)
-        .enter().append("g")
-        .attr("class", "u");
-
-    g.append("circle")
-        .attr("id", function(d) { return "set" + d.set_id; })
-        .attr("fill", function(d) { return "SlateBlue" })
-        .attr("r", "4px");
-    g.append("text")
-        .attr("class", "set-descr")
-        .attr("text-anchor", "top")
-        .attr("font-size", 12)
-        .text(function(d) { return d.descr; });
 
     var zoomListener = d3.behavior.zoom()
-        .scaleExtent([0.1, 10])
+        .scaleExtent([0.02, 10])
         .center([0,0])
         .on("zoom", zoomHandler);
     
-    brushend(null);
-
-    updateEmbedding();
-    
-    zoomListener(svg);
+    //brushend(null);
+    //
+    //zoomListener(svg);
         
     // Toggles zooming and brushing mode
     var toggleZoomBrush = function() {
@@ -219,29 +233,102 @@ appendVectorGraph = function(containerSelection, data, dimension, totalWidth, to
 
     var zoomBrushMode = true;
    
-    // Zoom/Brush toggle button
-    var zoomBrushButton = svg.append("g");
-    var zoomBrushText = zoomBrushButton.append("text")
-        .attr("x", 10)
-        .attr("y", 22)
-        .attr("text-anchor", "top")
-        .attr("font-size", 14)
-        .style("cursor", "pointer")
-        .on("click", function(d) { 
-            d3.select(this).text(function() { return toggleZoomBrush(); } );
-        })
-        .text(function() { return zoomBrushMode ? "brush mode" : "zoom mode"; } );
-    var bbox = zoomBrushText.node().getBBox();
-    var padding = 4;
-    zoomBrushButton.insert("rect","text")
-        .attr("x", bbox.x - padding)
-        .attr("y", bbox.y - padding)
-        .attr("width", bbox.width + (padding*2))
-        .attr("height", bbox.height + (padding*2))
-        .style("fill", "#ccc");
+   // select tsne category
+   var selectCategory = d3.select("#tsne-plot-category").on("change", change);
+   var options = selectCategory.selectAll('option').data(allDataKeys);
+
+   // Enter selection
+   options.enter().append("option").text(function(d,i) { return d; });
+
+   selectCategory
+        .append('option')
+        .text('category for t-sne plot')
+        .attr('selected', '');
+
+   function change() {
+       var selectedIndex = selectCategory.property('selectedIndex');
+       // get the selected category name
+       var dName = options[0][selectedIndex].__data__;
+       data = allData[dName];
+       drawTsnePlot();
+   }
+        
+    var drawTsnePlot = function() {
+   
+        containerGroup.remove();
+        containerGroup = svg
+            .append("g")
+            .attr("class", "cont");
+        
+        brush = d3.svg.brush()
+            .x(x)
+            .y(y)
+            .on("brushstart", brushstart)
+            .on("brush", brushmove)
+            .on("brushend", brushend);
+
+        var g = containerGroup.selectAll(".b")
+            .data(data.input.words)
+            .enter().append("g")
+            .attr("class", "u");
+
+        g.append("image")
+            .attr("href", function(d) { return "downloads/img/sets/" + d.set_id + ".jpg"; })
+            .attr("width", "25px");
+        /*
+        g.append("circle")
+            .attr("id", function(d) { return "set" + d.set_id; })
+            .attr("fill", function(d) { return "SlateBlue" })
+            .attr("r", "4px");
+        g.append("text")
+            .attr("class", "set-descr")
+            .attr("text-anchor", "top")
+            .attr("font-size", 11)
+            .text(function(d) { 
+                if (d.descr.length > 10) {
+                    return d.descr.substr(0, 20) + "...";
+                }
+                return d.descr; 
+            });
+            */
+
+        updateEmbedding();
+    
+        zoomListener = d3.behavior.zoom()
+            .scaleExtent([0.1, 10])
+            .center([0,0])
+            .on("zoom", zoomHandler);
+        
+        brushend(null);
+        
+        zoomListener(svg);
+    
+        // Zoom/Brush toggle button
+        var zoomBrushButton = svg.append("g");
+        var zoomBrushText = zoomBrushButton.append("text")
+            .attr("x", 10)
+            .attr("y", 22)
+            .attr("text-anchor", "top")
+            .attr("font-size", 14)
+            .style("cursor", "pointer")
+            .on("click", function(d) { 
+                d3.select(this).text(function() { return toggleZoomBrush(); } );
+            })
+            .text(function() { return zoomBrushMode ? "brush mode" : "zoom mode"; } );
+        var bbox = zoomBrushText.node().getBBox();
+        var padding = 4;
+        
+        zoomBrushButton.insert("rect","text")
+            .attr("x", bbox.x - padding)
+            .attr("y", bbox.y - padding)
+            .attr("width", bbox.width + (padding*2))
+            .attr("height", bbox.height + (padding*2))
+            .style("fill", "#ccc");
+    }
+
+    drawTsnePlot();
 }
 
-// TODO: make better summaries 
 var legoData = initLegoData('..')
 legoData.onDataLoad = function() {
     console.log("custom function!");

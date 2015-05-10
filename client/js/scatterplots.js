@@ -478,8 +478,10 @@ function tabulate(d,i) {
     // Show the image for the set
     d3.select("#info-table-wrapper").append("img")
         .attr("id", "set-logo")
-        .style("margin", "10px")
-        .style("width", "150px")
+        .style("margin-top", "10px")
+        .style("margin-left", "10%")
+        .style("margin-right", "10%")
+        .style("width", "80%")
         .style("display", "inline-block")
         .style("border", "2px black solid")
         .attr("src", "download/img/sets/" + d.set_id + ".jpg")
@@ -677,7 +679,7 @@ function removeHighlight(id){
 				// "randomly" choose next image to update, in this case 3
 				// just needs to be relatively prime to the number of img
 				// elements. Modulo 7 creates wrap around; 7 img elements
-				current = (current + 3) % 7;
+				current = (current + 3) % 5;
     				// next image index in array, modulo array length to wrap 
 				// around. 100 chosen since relatively prime to 9779 set ids
 				image_start = (image_start + next) % shuffleSets.length;
