@@ -181,46 +181,13 @@ circle.hidden {
 
 </body>
 
-
 <!--<script src="d3.v3.min.js"></script>-->
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script src="/js/lego-data.js"></script>
 <script src="/js/jquery-1.8.3.min.js"></script>
 <script src="./js/tsne.js"></script>
-
 <script src="./js/scatterplots.js"></script>
-<script language="JavaScript1.2">
-
-	var shuffleSets = ["10213-1", "10175-1", "10176-1","10177-1", "10178-1", 
-				"10185-1", "10187-1", "10210-1", "10214-1", "10221-1", 
-				"10227-1", "79108-1", "79116-1", "8940-1"];
-	var howOften = 5; //number often in seconds to rotate
-	var current = 3; //start the counter at 0
-	var image_start = 1;
-
-	function rotater() {
-		console.log("rotater is working");
-		d3.select("#banner_image" + current)
-			.transition()
-			.duration(1000)
-			.each("end", function(){ 	
-				d3.select("#banner_image"+current)
-				.attr('src', '/download/img/sets/'+shuffleSets[image_start]+ '.jpg')
-				.transition()
-				.duration(1000)
-				.style("opacity", 1);
-				current = (current==9-1) ? 0 : current + 1;
-    				image_start = (image_start == shuffleSets.length-1) ? 0 : image_start + 1;
-			}).style("opacity", 0);
-    		setTimeout("rotater()",howOften*1000);
-	}
-
-
-window.onload=rotater;
-
-</script>
 <script src="./js/set-tsne.js"></script>
-
 
 
 </html>

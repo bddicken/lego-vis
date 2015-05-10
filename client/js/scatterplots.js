@@ -18,7 +18,7 @@ var selection = []; 	// array of points selected by search
 var e; 			// extent of brush
 var clicked_set_id = "";		// set_id of clicked point
 var clicked_color = "";
-
+var All_Data = [];
 var svg = d3.selectAll("svg");	
 //////////////////////////////////////////////////////////////////
 
@@ -170,7 +170,8 @@ var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
     	var xAxis = d3.svg.axis()
         	.scale(x)
         	.orient('bottom')
-        	.ticks(5);
+        	.ticks(5)
+		.tickFormat(d3.format("d"));
 
     	var xAxisNodes = main.append('g')
         	.attr('transform', 'translate(0,' + height + ')')
@@ -193,7 +194,8 @@ var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
     	var yAxis = d3.svg.axis()
     		.scale(y)
     		.orient('left')
-    		.ticks(5);
+    		.ticks(5)
+		.tickFormat(d3.format("d"));
 
     	var yAxisNodes = main.append('g')
     		.attr('transform', 'translate(0,0)')
@@ -235,7 +237,8 @@ legoData.onDataLoad = function() {
     
     //var data = legoData.setsArray();
     var data2 = createData();
-	
+    All_Data = data2;
+
     appendScatterplot( 
  	    data2,
             function(d) { return d.setInfo.year; },
@@ -635,4 +638,51 @@ function removeHighlight(id){
         .attr("r", 3);
 }
 
+
+
+
+
+	var shuffleSets = [{set_id:"10213-1"},{set_id:"112-2"}, {set_id:"10175-1"},{set_id:"10176-1"},{set_id:"10177-1"}, {set_id:"10178-1"}, 
+{set_id:"10185-1"}, {set_id:"10187-1"}, {set_id:"10210-1"}, {set_id:"10214-1"}, {set_id:"10221-1"}, 
+{set_id:"10227-1"}, {set_id:"79108-1"}, {set_id:"79116-1"}, {set_id:"8940-1"}];
+
+
+	var howOften = 5; //number often in seconds to rotate
+	var current = 3; //start the counter at 0
+	var image_start = 1;
+	var errorSet = shuffleSets;
+	var next = 1;
+	function rotater() {
+		if (image_start == 0) {
+			next = 100;
+			shuffleSets = All_Data;
+			console.log("All_Data length " +shuffleSets.length);
+		} 
+		console.log("rotater is working");
+		
+		d3.select("#banner_image" + current)
+			.transition()
+			.duration(1000)
+			.each("end", function(){ 	
+				var image = d3.select("#banner_image"+current)
+				.attr('src', '/download/img/sets/'+shuffleSets[image_start].set_id+ '.jpg');
+				$("#banner_image"+current).error(function(){$("#banner_image"+current+'.jpg').attr("src", "/download/img/sets/9686-1");});
+				image.transition()
+				.duration(1000)
+				.delay(200)
+				.style("opacity", 1);
+				current = (current==9-1) ? 0 : current + 1;
+    				image_start = (image_start + next) % shuffleSets.length;
+			}).style("opacity", 0);
+    		setTimeout("rotater()",howOften*1000);
+	}
+
+
+function imgError() {
+    $(this).attr('src', "/download/img/sets/" + errorSet[image_start % 14]);
+    return true;
+}
+
+
+window.onload=rotater;
 
