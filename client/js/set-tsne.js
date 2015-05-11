@@ -1,10 +1,8 @@
-// TODO: re-org whole file. Wrap it all in an anonymous function.
+var tsnePlot = (function() {
 
-tsnePlot = (function() {
+var tsnePlotVar = {};
 
-var container = d3.select("body").append("span");
-
-appendVectorGraph = function(containerSelection, allData, dimension, totalWidth, totalHeight) {
+tsnePlotVar.appendVectorGraph = function(containerSelection, allData, dimension, totalWidth, totalHeight) {
 
     allDataKeys = Object.keys(allData);
     var data = allData['Star Wars'];
@@ -43,27 +41,7 @@ appendVectorGraph = function(containerSelection, allData, dimension, totalWidth,
         .append("g")
         .attr("class", "cont");
 
-    var brushmove = function(p) {
-        /*
-        var e = brush.extent();
-        var b00 = e[0][0]; 
-        var b01 = e[0][1];
-        var b10 = e[1][0];
-        var b11 = e[1][1];
-        
-        d3.selectAll("circle").attr("fill", '#559');
-        
-        svg.selectAll("circle").classed("hidden", function(d, i) {
-            var xp = ((data.output[i][0]*20*ss + tx) + 400);
-            var yp = ((data.output[i][1]*20*ss + ty) + 400) * (-1) + height;
-            var value = b00 > xp || xp > b10 || b01 > yp || yp > b11;
-            if (!value) { 
-                d3.selectAll("#set" + d.set_id.replace(/\./g, "-")).attr("fill", "red"); // SLOW
-            }
-            return false;
-        });
-        */
-    }
+    var brushmove = function(p) { }
 
     var brushend = function(p) {
 
@@ -329,12 +307,6 @@ appendVectorGraph = function(containerSelection, allData, dimension, totalWidth,
     drawTsnePlot();
 }
 
-var legoData = initLegoData('..')
-legoData.onDataLoad = function() {
-    console.log("custom function!");
-    var allSets = d3.select("#TSNEplot");
-    appendVectorGraph(allSets, legoData.tsne, "dim", 1000, 800);
-};
-legoData.loadAllData();
+return tsnePlotVar;
 
 })();

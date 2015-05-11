@@ -341,7 +341,9 @@ legoData.onDataLoad = function() {
 
     setUpSearch(data2);
 
-
+    // load T-SNE
+    var allSets = d3.select("#TSNEplot");
+    tsnePlot.appendVectorGraph(allSets, legoData.tsne, "dim", 1000, 800);
 
 };
 //////////////////////////////////////////////////////////////////////////////////////
@@ -650,7 +652,7 @@ function removeHighlight(id){
 	// a few set ids to use before the data loads and to use when missing an image
 
 
-	var howOften = 5; //number often in seconds to rotate
+	var howOften = 2; //number often in seconds to rotate
 	var current = 3; //start the counter at 0
 	var image_start = 1; // start image to load
 	var errorSet = shuffleSets; //set ids to use when file not found for an image
