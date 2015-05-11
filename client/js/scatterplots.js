@@ -645,20 +645,21 @@ function removeHighlight(id){
 	var shuffleSets = [{set_id:"10213-1"}, {set_id:"10175-1"},{set_id:"10176-1"},{set_id:"10177-1"}, {set_id:"10178-1"}, 
 {set_id:"10185-1"}, {set_id:"10187-1"}, {set_id:"10210-1"}, {set_id:"10214-1"}, {set_id:"10221-1"}, 
 {set_id:"10227-1"}, {set_id:"79108-1"}, {set_id:"79116-1"}, {set_id:"8940-1"}];
+	// a few set ids to use before the data loads and to use when missing an image
 
 
 	var howOften = 5; //number often in seconds to rotate
 	var current = 3; //start the counter at 0
-	var image_start = 1;
-	var errorSet = shuffleSets;
-	var next = 1;
+	var image_start = 1; // start image to load
+	var errorSet = shuffleSets; //set ids to use when file not found for an image
+	var next = 1;// initially 1, then set to 100 to "randomly" pick set ids
+
 	function rotater() {
 		if (image_start == 0) {
 			next = 100;
-			shuffleSets = All_Data;
-			console.log("All_Data length " +shuffleSets.length);
+			shuffleSets = All_Data; // data should be loaded by now
 		} 
-		console.log("rotater is working");
+		//console.log("rotater is working");
 		
 		d3.select("#banner_image" + current)
 			.transition()
@@ -666,23 +667,23 @@ function removeHighlight(id){
 			.each("end", function(){ 	
 				var image = d3.select("#banner_image"+current)
 				.attr('src', '/download/img/sets/'+shuffleSets[image_start].set_id+ '.jpg');
-				$('img').error(function(){$(this).attr("src", "/download/img/sets/" + errorSet[image_start % 14].set_id + ".jpg");});
+				$('img').error(function(){
+					$(this).attr("src", "/download/img/sets/" 
+						+errorSet[image_start % 14].set_id+".jpg");});
 				image.transition()
 				.duration(1000)
 				.delay(200)
 				.style("opacity", 1);
-				current = (current==9-1) ? 0 : current + 1;
-    				image_start = (image_start + next) % shuffleSets.length;
+				// "randomly" choose next image to update, in this case 3
+				// just needs to be relatively prime to the number of img
+				// elements. Modulo 7 creates wrap around; 7 img elements
+				current = (current + 3) % 7;
+    				// next image index in array, modulo array length to wrap 
+				// around. 100 chosen since relatively prime to 9779 set ids
+				image_start = (image_start + next) % shuffleSets.length;
 			}).style("opacity", 0);
     		setTimeout("rotater()",howOften*1000);
 	}
-
-
-function imgError() {
-    $(this).attr('src', "/download/img/sets/" + errorSet[image_start % 14]);
-    return true;
-}
-
 
 window.onload=rotater;
 
