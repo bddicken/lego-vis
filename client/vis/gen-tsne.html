@@ -1,16 +1,7 @@
-<!DOCTYPE html>
+`:<!DOCTYPE html>
 <meta charset="utf-8">
 <html>
 <head>
-
-<style>
-
-body {
-    font-family: Arial, Helvetica, sans-serif;
-}
-
-</style>
-
 </head>
 <body>
 
@@ -36,7 +27,7 @@ body {
         if(!filename) filename = 'console.json'
 
         if(typeof data === "object"){
-            data = JSON.stringify(data, undefined, 4)
+            data = JSON.stringify(data, undefined, 1)
         }
 
         var blob = new Blob([data], {type: 'text/json'}),
@@ -51,28 +42,23 @@ body {
     }
 })(console)
 
-function download(filename, text) {
-    var pom = document.createElement('a');
-    pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-    pom.setAttribute('download', filename);
-
-    pom.style.display = 'none';
-    document.body.appendChild(pom);
-
-    pom.click();
-
-    document.body.removeChild(pom);
-}
-
 var getTSNEInitialGraphBetter = function () {
  
     // ( map of category -> ( map of token -> count ) )
     var category_token_map = {};
+    
+    // (map of set name ->  ( map of descriptive token -> count ) )
+    var descs_tokens = {};
+    
+    // results returned in the format t-sne expects.
+    var result = {};
 
     // populate category_map_token
     for (var i in legoData.sets) {
         var set = legoData.sets[i];
         var tokens = set.descr.split(/([_\W])/);
+        
+        // by descr
         if(category_token_map[set.t1] == undefined) {
             category_token_map[set.t1] = {};
         }
@@ -82,14 +68,18 @@ var getTSNEInitialGraphBetter = function () {
             }
             category_token_map[set.t1][tokens[j]]++; 
         }
+
+        // by category
+        tokens = set.t1.split(/([_\W])/);
+        for (var j in tokens) {
+            if(category_token_map[set.t1][tokens[j]] == undefined) {
+                category_token_map[set.t1][tokens[j]] = 0;
+            }
+            category_token_map[set.t1][tokens[j]] += 2;
+        }
     }
 
-    console.log(JSON.stringify(category_token_map));
-    console.log(Object.keys(category_token_map).length);
-
-    var descs_tokens = {};
-    
-    // populate "descs" with map of set_id -> description string
+    // populate "descs_tokens" with map of set_id -> description string
     for (var i in legoData.sets) {
         var descr = "";
         var sid = legoData.sets[i].set_id;
@@ -102,24 +92,23 @@ var getTSNEInitialGraphBetter = function () {
                 }
             }
         }
+        
+        descr += ' ' + legoData.sets[i].descr;
         descr += ' ' + legoData.sets[i].t1;
 
         // split tokens
         var tokens = descr.split(/([_\W])/);
-        var unique_tokens = tokens.filter(function(elem, pos) {
-            return tokens.indexOf(elem) == pos;
-        });
-        descs_tokens[i] = unique_tokens;
+        
+        descs_tokens[i] = {};
+        for (var j in tokens) {
+            var key = tokens[j];
+            if( !(key in descs_tokens[i])) {
+                descs_tokens[i][key] = 0;
+            }
+            descs_tokens[i][key]++;
+        }
     }
-
     
-    //var keys = console.log(Object.keys(category_token_map).length);
-
-    var result = {};
-    result['words'] = [];
-    result['vecs'] = [];
-
-    //var keys = Object.keys(all_tokens);
     var counter = 0;
 
     for (var i in descs_tokens) {
@@ -129,67 +118,84 @@ var getTSNEInitialGraphBetter = function () {
 
         // for each category
         for (var j in category_token_map) {
+            var sum = 1;
             category_map = category_token_map[j];
             // for each token in set
             for (var k in t) {
-                set_key = t[k];
-
-                if (set_key in category_map) {
-                    vector.push(category_map[set_key]);
+                var count = t[k];
+                if ((k in category_map)) {
+                    sum += count * category_map[k];
                 }
             }
+            vector.push(sum);
+            //vector.push(Math.ceil(Math.pow(sum, 2)));
         }
-        
-        result['words'].push(legoData.sets[i]);
-        result['vecs'].push(vector);
+      
+        var set_cat = legoData.sets[i].t1;
+        if (!(set_cat in result)) {
+            result[set_cat] = {};
+            result[set_cat] = {};
+            result[set_cat]['words'] = [];
+            result[set_cat]['vecs'] = [];
+        }
+        result[set_cat]['words'].push(legoData.sets[i]);
+        result[set_cat]['vecs'].push(vector);
 
-        if (counter++ > 1000) break;
     }
     
     console.log("initial input computed.");
     return result;
 }
 
+allTsneOuts = {};
 
+appendVectorGraph = function(data, key, left_to_compute) {
 
-appendVectorGraph = function(data) {
+    console.log("Deginning to compute t-sne graph layout.");
 
-    console.log("beginning to compute graph");
-
-    var opt = {epsilon: 20, perplexity: 20};
-    var T = new tsnejs.tSNE(opt); // create a tSNE instance
+    // fiddle with the options for optimal speed/layout tradeoff
+    var opt = {epsilon: 5, perplexity: 5};
+    // create a tSNE instance
+    var T = new tsnejs.tSNE(opt);
     var Y;
     var stepNum = 0;
-    var stepMax = 200;
+    var stepMax = 250;
+    //var stepMax = 400;
     
     T.initDataRaw(data.vecs); 
     var Y = T.Y;
 
     var counter = 0;
-    var step_looper = setInterval(
-        function() {
-            if (stepNum++ >= stepMax) { 
-              console.log("done!");
-              clearInterval(step_looper);
-              console.save({'output':Y, 'input':data}, 'tsnes.json')
-//              var text = JSON.stringify({'output':Y, 'input':data});
-//              download('tsne.json', text);
-            }
-            console.log("interval " + counter++);
-            var cost = T.step(); 
-        }, 0);
+    var step_looper = setInterval(function() {
+        
+        if (stepNum++ >= stepMax) { 
+          console.log("done!");
+          console.log("Y = " + JSON.stringify(Y));
+          console.log("d = " + JSON.stringify(data));
+          clearInterval(step_looper);
+          allTsneOuts[key] = {'output':Y, 'input':data};
+          if (left_to_compute == 0) {
+              console.save(allTsneOuts, 'tsnes.json')
+          }
+        }
+
+        console.log("interval " + counter++);
+        var cost = T.step(); 
+    }, 0);
 }
 
 var legoData = initLegoData('..')
 legoData.onDataLoad = function() {
-    console.log("custom function!");
+    
     var data = getTSNEInitialGraphBetter();
-    
-    //console.log(JSON.stringify(data));
-    //return;
-    
     var allSets = d3.select("#plot");
-    appendVectorGraph(data);
+    var counter = Object.keys(data).length;
+    
+    // generate TSNE layout for each set category 
+    for (var i in data) {
+        --counter;
+        appendVectorGraph(data[i], i, counter);
+    }
 };
 legoData.loadAllData();
 
