@@ -642,7 +642,7 @@ function removeHighlight(id){
 
 
 
-	var shuffleSets = [{set_id:"10213-1"},{set_id:"112-2"}, {set_id:"10175-1"},{set_id:"10176-1"},{set_id:"10177-1"}, {set_id:"10178-1"}, 
+	var shuffleSets = [{set_id:"10213-1"}, {set_id:"10175-1"},{set_id:"10176-1"},{set_id:"10177-1"}, {set_id:"10178-1"}, 
 {set_id:"10185-1"}, {set_id:"10187-1"}, {set_id:"10210-1"}, {set_id:"10214-1"}, {set_id:"10221-1"}, 
 {set_id:"10227-1"}, {set_id:"79108-1"}, {set_id:"79116-1"}, {set_id:"8940-1"}];
 
@@ -666,7 +666,7 @@ function removeHighlight(id){
 			.each("end", function(){ 	
 				var image = d3.select("#banner_image"+current)
 				.attr('src', '/download/img/sets/'+shuffleSets[image_start].set_id+ '.jpg');
-				$("#banner_image"+current).error(function(){$("#banner_image"+current+'.jpg').attr("src", "/download/img/sets/9686-1");});
+				$('img').error(function(){$(this).attr("src", "/download/img/sets/" + errorSet[image_start % 14] + ".jpg");});
 				image.transition()
 				.duration(1000)
 				.delay(200)
