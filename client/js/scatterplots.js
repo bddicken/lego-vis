@@ -666,7 +666,7 @@ function removeHighlight(id){
 			.each("end", function(){ 	
 				var image = d3.select("#banner_image"+current)
 				.attr('src', '/download/img/sets/'+shuffleSets[image_start].set_id+ '.jpg');
-				$('img').error(function(){$(this).attr("src", "/download/img/sets/" + errorSet[image_start % 14] + ".jpg");});
+				$('img').error(function(){$(this).attr("src", "/download/img/sets/" + errorSet[image_start % 14].set_id + ".jpg");});
 				image.transition()
 				.duration(1000)
 				.delay(200)
