@@ -115,7 +115,7 @@ var max = function(d, getter) {
     	return value;
 }
 
-var legoData = initLegoData(" ")
+var legoData = initLegoData("./");
 var chartCounter = 1;
 
 
@@ -298,20 +298,14 @@ legoData.onDataLoad = function() {
    
     	// clicking a point highlights it
     	node.on("click", function(d,i){
-            updateClickedSet(d,i);
+            updateClickedSet(i);
       	});
 
 	//for (j =0; j<9; j++){
-	d3.selectAll(".image").on("click", function(d,j){
-	    var stringId=d3.select("#banner_image"+j).attr('src');
-	    stringId = stringId.substring(19,stringId.length -4);
-	    console.log(stringId);
-	    for (i=0; i< data2.length; i++){
-	   	if(data2[i].set_id ==stringId) var d = data2[i];}
-	    console.log(d);
-	    updateClickedSet(d,i);
-		});
-	
+	d3.selectAll(".image").on("click", function(){
+        var i = d3.select(this).select('img').attr("value");
+	    updateClickedSet(i);
+    });
 
     	// mousing out removes highlight
     	d3.selectAll("#background_click").on("click", function(d,i){
@@ -345,6 +339,9 @@ legoData.onDataLoad = function() {
     // load T-SNE
     var allSets = d3.select("#TSNEplot");
     tsnePlot.appendVectorGraph(allSets, legoData.tsne, "dim", 1000, 800);
+
+    // start image rotation
+    rotater();
 
 };
 //////////////////////////////////////////////////////////////////////////////////////
@@ -634,22 +631,23 @@ function arrayString(aray){
 }
     	
 // Highlight clicked point
-function updateClickedSet(d,i){
-    if(clicked_set_id != d.set_id){
+function updateClickedSet(index) {
+    var d = All_Data[index];
+    if(clicked_set_id != d.set_id) {
         d3.select("table").remove();
         d3.select("#set-logo").remove();
         removeHighlight(clicked_set_id);
-        var setTable = tabulate(d,i);		    
+        var setTable = tabulate(d,index);		    
     }
     clicked_set_id = d.set_id;
     clicked_color = d3.select("#set"+clicked_set_id).attr("fill");
     highlightClickedPoint();
-};
+}
 
 function highlightClickedPoint() {
     d3.selectAll("#set"+clicked_set_id)
         .moveToFront()
-        .attr("fill", '#648F07')
+        .attr("fill", 'yellow')
         .attr("opacity", 1)
         .attr("r", 6);
 }
@@ -669,51 +667,48 @@ function removeHighlight(id){
 }
 
 
+var howOften = 2; //number often in seconds to rotate
+var current = 3; //start the counter at 0
+var image_start = 1; // start image to load
+var next = 1;// initially 1, then set to 100 to "randomly" pick set ids
 
+function rotater() {
+    
+    //console.log("rotater is working");
+    
+    d3.select("#banner_image" + current)
+        .transition()
+        .duration(1000)
+        .each("end", function(){
 
+            var image = d3.select("#banner_image"+current)
+                .attr('src', './download/img/sets/'+All_Data[image_start].set_id+ '.jpg')
+                .attr("value", image_start);
 
-	var shuffleSets = [{set_id:"10213-1"}, {set_id:"10175-1"},{set_id:"10176-1"},{set_id:"10177-1"}, {set_id:"10178-1"}, 
-{set_id:"10185-1"}, {set_id:"10187-1"}, {set_id:"10210-1"}, {set_id:"10214-1"}, {set_id:"10221-1"}, 
-{set_id:"10227-1"}, {set_id:"79108-1"}, {set_id:"79116-1"}, {set_id:"8940-1"}];
-	// a few set ids to use before the data loads and to use when missing an image
+            image.transition()
+                .duration(1000)
+                .delay(200)
+                .style("opacity", 1);
 
+            // "randomly" choose next image to update, in this case 3
+            // just needs to be relatively prime to the number of img
+            // elements. Modulo 7 creates wrap around; 7 img elements
+            current = (current + 3) % 8;
 
-	var howOften = 2; //number often in seconds to rotate
-	var current = 3; //start the counter at 0
-	var image_start = 1; // start image to load
-	var errorSet = shuffleSets; //set ids to use when file not found for an image
-	var next = 1;// initially 1, then set to 100 to "randomly" pick set ids
+            // next image index in array, modulo array length to wrap 
+            // around. 100 chosen since relatively prime to 9779 set ids
+            image_start = Math.floor((Math.random() * All_Data.length) - 1);
 
-	function rotater() {
-		if (image_start == 0) {
-			next = 100;
-			shuffleSets = All_Data; // data should be loaded by now
-		} 
-		//console.log("rotater is working");
-		
-		d3.select("#banner_image" + current)
-			.transition()
-			.duration(1000)
-			.each("end", function(){ 	
-				var image = d3.select("#banner_image"+current)
-				.attr('src', './download/img/sets/'+shuffleSets[image_start].set_id+ '.jpg');
-				$('img').error(function(){
-					$(this).attr("src", "./download/img/sets/" 
-						+errorSet[image_start % 14].set_id+".jpg");});
-				image.transition()
-				.duration(1000)
-				.delay(200)
-				.style("opacity", 1);
-				// "randomly" choose next image to update, in this case 3
-				// just needs to be relatively prime to the number of img
-				// elements. Modulo 7 creates wrap around; 7 img elements
-				current = (current + 3) % 5;
-    				// next image index in array, modulo array length to wrap 
-				// around. 100 chosen since relatively prime to 9779 set ids
-				image_start = (image_start + next) % shuffleSets.length;
-			}).style("opacity", 0);
-    		setTimeout("rotater()",howOften*1000);
-	}
+        }).style("opacity", 0);
 
-window.onload=rotater;
+        setTimeout("rotater()",howOften*1000);
+}
+            
+// handle error / missing image
+$('.image').error(function(){
+    image_start = Math.floor((Math.random() * All_Data.length) - 1);
+    $(this)
+    .attr('src', './download/img/sets/'+All_Data[image_start].set_id+ '.jpg')
+    .attr("value", image_start);
+});
 

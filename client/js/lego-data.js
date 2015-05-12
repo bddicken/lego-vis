@@ -54,7 +54,7 @@ var initLegoData = (function(urlPath) {
     }
 
     legoData.loadAllData = function() {
-        
+        console.log("pref = " + legoData.urlPrefix); 
         d3.csv(legoData.urlPrefix + "/download/data/colors.csv", function(data) {
             for (var i in data) {
                 legoData.pieces[data[i].id] = data[i];

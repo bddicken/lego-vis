@@ -110,7 +110,7 @@ tsnePlotVar.appendVectorGraph = function(containerSelection, allData, dimension,
       svg.selectAll("set-t1")
         .data(catsa).enter().append("text")
         .attr("class", "set-t1 shadow")
-        .attr("font-size", 22)
+        .attr("font-size", 26)
         .attr("text-anchor", "top")
         .style("fill", "OrangeRed")
         .style("font-weight", "bold")

@@ -134,7 +134,6 @@ body {
   background-color: white;
   width:100%;
   height:70px;
-  height:auto;
   display: inline-block;
   border-style: solid;
   border-color: #aaa;
@@ -158,12 +157,26 @@ body {
   height:60px;
   margin-left:10px;
 }
+
 #placeholderdiv {
   vertical-align: middle;
   line-height:70px;
-  height:60px;
   display: inline-block;
   margin-left:10px;
+  width: -moz-calc(99% - 930px);
+  width: -webkit-calc(99% - 930px);
+  width: calc(99% - 930px);
+  height:60px;
+  overflow-x:hidden;
+  overflow-y:hidden;
+}
+
+#primary-bar-content{
+  vertical-align: middle;
+  /*line-height:70px;*/
+  display: inline-block;
+  width:900px;
+  height:60px;
 }
 .image {
   vertical-align: middle;
@@ -194,50 +207,70 @@ circle.hidden {
 <body>
 
 <div id="title-bar">
-<img id="title-logo" src="./style/img/Lego-logo.png" alt="Lego Logo">
-<span id="title">-VIS</span>
 
-<label for="search" style="display: inline-block; width: auto; text-align: left">
-  <span id="search-value">
-    <input class="text-input" type="text" value="search" id="search">
-  </span>
-  <span id="buttons" style="margin-left:10px">
-    <button id="search-setid"   class="button button-primary button-rounded button-small">Set ID</button> 
-    <button id="search-pieceid" class="button button-primary button-rounded button-small">Piece ID</button> 
-    <button id="search-descr"   class="button button-primary button-rounded button-small">Description</button>
-  </span>
-</label>
+<span id="primary-bar-content">
 
-<span class="button-dropdown button-dropdown-primary" data-buttons="dropdown">
-  <button id="tsne-plot-category-button" class="button button-rounded button-primary button-small" style="width:220px;">
-    Set category for T-SNE plot <i class="fa fa-caret-down"></i>
-  </button>
-  <ul id="tsne-plot-category" style="max-height:500px; overflow-y:scroll;" class="button-dropdown-list is-below"></ul>
+    <img id="title-logo" src="./style/img/Lego-logo.png" alt="Lego Logo">
+    <span id="title">-VIS</span>
+
+    <label for="search" style="display: inline-block; width: auto; text-align: left">
+      <span id="search-value">
+        <input class="text-input" type="text" value="search" id="search">
+      </span>
+      <span id="buttons" style="margin-left:10px">
+        <button id="search-setid"   class="button button-primary button-rounded button-small">Set ID</button> 
+        <button id="search-pieceid" class="button button-primary button-rounded button-small">Piece ID</button> 
+        <button id="search-descr"   class="button button-primary button-rounded button-small">Description</button>
+      </span>
+    </label>
+
+    <span class="button-dropdown button-dropdown-primary" data-buttons="dropdown">
+      <button id="tsne-plot-category-button" class="button button-rounded button-primary button-small" style="width:220px;">
+        Set category for T-SNE plot <i class="fa fa-caret-down"></i>
+      </button>
+      <ul id="tsne-plot-category" style="max-height:500px; overflow-y:scroll;" class="button-dropdown-list is-below"></ul>
+    </span>
+
 </span>
-
 
 <!--<layer id="placeholderlayer"></layer>-->
 
 <span id="placeholderdiv">
 
     <span class="image"  id="image_click0">
-        <img id= "banner_image0" src='./download/img/sets/10179-1.jpg' height=60px />
+        <img id= "banner_image0" height=60px />
     </span>
 
-    <span class="image"  id="image_click1">
-        <img id= "banner_image1" src='./download/img/sets/71004-3.jpg' height=60px />
+    <span class="image" id="image_click1">
+        <img id= "banner_image1" height=60px />
     </span>
 
-    <span class="image"  id="image_click2">
-        <img id= "banner_image2" src='./download/img/sets/42028-1.jpg' height=60px />
+    <span class="image" id="image_click2">
+        <img id= "banner_image2" height=60px />
     </span>
 
-    <span class="image"  id="image_click3">
-        <img id= "banner_image3" src='./download/img/sets/10189-1.jpg' height=60px />
+    <span class="image" id="image_click3">
+        <img id= "banner_image3" height=60px />
     </span>
         
-    <span class="image"  id="image_click4">
-        <img id= "banner_image4" src='./download/img/sets/10226-1.jpg' height=60px />
+    <span class="image" id="image_click4">
+        <img id= "banner_image4" height=60px />
+    </span>
+
+    <span class="image" id="image_click5">
+        <img id= "banner_image5" height=60px />
+    </span>
+
+    <span class="image" id="image_click6">
+        <img id= "banner_image6" height=60px />
+    </span>
+
+    <span class="image" id="image_click7">
+        <img id= "banner_image7" height=60px />
+    </span>
+
+    <span class="image" id="image_click8">
+        <img id="banner_image8" height=60px />
     </span>
 
 </span>
@@ -254,10 +287,10 @@ circle.hidden {
 
 </body>
 
-<!--<script src="d3.v3.min.js"></script>-->
-<script src="http://d3js.org/d3.v3.min.js"></script>
-<script src="/js/lego-data.js"></script>
-<script src="/js/jquery-1.8.3.min.js"></script>
+<!--<script src="http://d3js.org/d3.v3.min.js"></script>-->
+<script src="./js/d3.v3.js"></script>
+<script src="./js/lego-data.js"></script>
+<script src="./js/jquery-1.8.3.min.js"></script>
 <script src="./js/tsne.js"></script>
 <script src="./js/set-tsne.js"></script>
 <script src="./js/scatterplots.js"></script>
