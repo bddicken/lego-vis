@@ -18,7 +18,8 @@ var selection = []; 	// array of points selected by search
 var e; 			// extent of brush
 var clicked_set_id = "";		// set_id of clicked point
 var clicked_color = "";
-var All_Data = [];
+var All_Data = []; // All of the data in an array
+var All_Data_Map ={}; // Same info as in All_Data, in a map, keyed by set_id
 var svg = d3.selectAll("svg");	
 //////////////////////////////////////////////////////////////////
 
@@ -241,8 +242,15 @@ legoData.onDataLoad = function() {
     console.log("custom function!");
     
     //var data = legoData.setsArray();
+
+    // Init All_Data
     var data2 = createData();
-    All_Data = data2;
+    All_Data = data2; 
+
+    // Init All_Data_Map
+    for (var i in All_Data) {
+        All_Data_Map[All_Data[i].set_id] = All_Data[i];
+    }
 
     appendScatterplot( 
  	    data2,
@@ -635,8 +643,22 @@ function arrayString(aray){
     }
     return string;
 }
-    	
-// Highlight clicked point
+
+// Highlight clicked points with set_id
+function updateClickedSetWithKey(key) {
+    var d = All_Data_Map[key];
+    if(clicked_set_id != d.set_id) {
+        d3.select("table").remove();
+        d3.select("#set-logo").remove();
+        removeHighlight(clicked_set_id);
+        var setTable = tabulate(d,0); 
+    }
+    clicked_set_id = d.set_id;
+    clicked_color = d3.select("#set"+clicked_set_id).attr("fill");
+    highlightClickedPoint();
+}
+
+// Highlight clicked point with index in All_Data
 function updateClickedSet(index) {
     var d = All_Data[index];
     if(clicked_set_id != d.set_id) {

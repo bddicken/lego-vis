@@ -125,12 +125,7 @@ tsnePlotVar.appendVectorGraph = function(containerSelection, allData, dimension,
           .attr("height", "30px")
           .attr("xlink:href", function(d) { return "./download/img/sets/" + d.set_id + ".jpg"; })
           .on("click", function(d) { 
-            // TODO: THIS IS HACKY!!!
-            d3.selectAll("#set" + d.set_id.replace(/\./g, "-"))
-              .classed("YOLO", function(d, i) {
-                if (i == 2)
-                    tabulate(d, i); 
-              });
+            updateClickedSetWithKey(d.set_id);
           }) 
           .attr("x", function(d,i) { 
             return ((data.output[i][0]*20*ss + tx) + 400);
