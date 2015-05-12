@@ -46,6 +46,7 @@ tsnePlotVar.appendVectorGraph = function(containerSelection, allData, dimension,
     var brushmove = function(p) { }
 
     var brushend = function(p) {
+        controlSpinLoad(true);
 
         var e = brush.extent();
         var b00 = e[0][0]; 
@@ -54,12 +55,14 @@ tsnePlotVar.appendVectorGraph = function(containerSelection, allData, dimension,
         var b11 = e[1][1];
         
         d3.selectAll("circle").attr("fill", '#1b9af7');
-        
-        svg.selectAll("circle").classed("hidden", function(d, i) {
+       
+        svg.selectAll("image").classed("hidden", function(d, i) {
             var xp = ((data.output[i][0]*20*ss + tx) + 400);
             var yp = ((data.output[i][1]*20*ss + ty) + 400) * (-1) + height;
             var value = b00 > xp || xp > b10 || b01 > yp || yp > b11;
             if (!value) { 
+                // TODO: should only select circles in the scatterplots, 
+                // not all the circles on the whole page
                 d3.selectAll("#set" + d.set_id.replace(/\./g, "-")).attr("fill", "red"); // SLOW
             }
             return false;
@@ -68,6 +71,8 @@ tsnePlotVar.appendVectorGraph = function(containerSelection, allData, dimension,
 
         if (brush.empty()) svg.selectAll(".hidden").classed("hidden", false);
         //console.log("players = " + JSON.stringify(players));
+        
+        controlSpinLoad(false);
     }
 
     var brush = d3.svg.brush()
