@@ -2,13 +2,78 @@
 <meta charset="utf-8">
 <html>
 <head>
+
 <link href='http://fonts.googleapis.com/css?family=Didact+Gothic' rel='stylesheet' type='text/css'>
+<link href='lib/buttons/buttons.css' rel='stylesheet' type='text/css'>
+
+<!-- Only needed if you want support for dropdown menus for buttons library -->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script type="text/javascript" src="lib/buttons/buttons.js"></script>
+      
+<!-- Only needed if you want font icons -->
+<link href="//netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.css" rel="stylesheet">
 
 <style>
+
+#content-container {
+    margin-left:auto;
+    margin-right:auto;
+}
+
+.text-input {
+  height:25px;
+  border-style: solid;
+  border-color: #1b9af7;
+  border-width: 2px;
+  border-radius: 5px;
+}
+
+table {
+font-family: 'Arial';
+margin: 25px auto;
+border-collapse: collapse;
+border: 1px solid #eee;
+margin-left:5%;
+margin-right:5%;
+width:90%;
+/*
+border-bottom: 2px solid #00cccc;
+box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1), 0px 10px 20px rgba(0, 0, 0, 0.05), 0px 20px 20px rgba(0, 0, 0, 0.05), 0px 30px 20px rgba(0, 0, 0, 0.05);
+*/
+}
+
+table tr:hover {
+background: #f4f4f4;
+}
+
+table tr:hover td {
+color: #555;
+}
+
+table th, table td {
+color: #999;
+border: 1px solid #eee;
+padding: 5px 5px;
+border-collapse: collapse;
+}
+
+table th {
+background: #00cccc;
+color: #fff;
+text-transform: uppercase;
+font-size: 12px;
+}
+
+table th.last {
+border-right: none;
+}
+
 
 body {
   font-family: 'Didact Gothic', sans-serif;
   font-size: 13px;
+  background-color:#ccc;
+  padding:8px;
 }
 
 .shadow {
@@ -26,58 +91,65 @@ body {
 }
 
 #info-table-wrapper {
-  width:16%;
+  background-color:white;
+  width:250px;
   height:800px;
   display: inline-block;
   border-style: solid;
+  border-color: #aaa;
   border-width: 1px;
-  border-radius: 4px;
   overflow-x:hidden;
   overflow-y:hidden;
 }
 
 #scatterplots {
+  background-color:white;
   height:800px;
-  width:42%;
+  width:520px;
+  /*width:42%;*/
   display: inline-block;
   border-style: solid;
+  border-color: #aaa;
   border-width: 1px;
-  border-radius: 4px;
   overflow-y:scroll;
 }
 
 #TSNEplot{
+  background-color:white;
   width:40%;
+  width: -moz-calc(99% - 775px);
+  width: -webkit-calc(99% - 775px);
+  width: calc(99% - 775px);
   height:800px;
   display: inline-block;
   border-style: solid;
+  border-color: #aaa;
   border-width: 1px;
-  border-radius: 4px;
   overflow-x:hidden;
   overflow-y:hidden;
 }
 
 #title-bar {
   background-color: SteelBlue;
-  color: yellow;
+  background-color: white;
   width:100%;
   height:70px;
   height:auto;
   display: inline-block;
   border-style: solid;
+  border-color: #aaa;
   border-width: 1px;
-  border-radius: 4px;
   margin-bottom:5px;
 }
 
 #title {
   font-size:26px;
-  color:white;
+  color:black;
   vertical-align: middle;
   
   line-height:70px;
   height:70px;
-  margin-right:10px;
+  margin-right:20px;
 }
 
 #title-logo {
@@ -86,7 +158,7 @@ body {
   height:60px;
   margin-left:10px;
 }
-#placeholderlayer, #placeholderdiv {
+#placeholderdiv {
   vertical-align: middle;
   line-height:70px;
   height:60px;
@@ -125,23 +197,26 @@ circle.hidden {
 <img id="title-logo" src="./style/img/Lego-logo.png" alt="Lego Logo">
 <span id="title">-VIS</span>
 
-<select id="tsne-plot-category"></select>
-
-<label for="search" style="display: inline-block; width: 450px; text-align: left">
-  
+<label for="search" style="display: inline-block; width: auto; text-align: left">
   <span id="search-value">
-    <input type="text" value="search" id="search">	 	
+    <input class="text-input" type="text" value="search" id="search">
   </span>
-  
   <span id="buttons" style="margin-left:10px">
-    <button id="search-setid"> Set ID</button> 
-    <button id="search-pieceid"> Piece ID</button> 
-    <button id="search-descr"> Description</button> 
+    <button id="search-setid"   class="button button-primary button-rounded button-small">Set ID</button> 
+    <button id="search-pieceid" class="button button-primary button-rounded button-small">Piece ID</button> 
+    <button id="search-descr"   class="button button-primary button-rounded button-small">Description</button>
   </span>
-
 </label>
 
-<layer id="placeholderlayer"></layer>
+<span class="button-dropdown button-dropdown-primary" data-buttons="dropdown">
+  <button id="tsne-plot-category-button" class="button button-rounded button-primary button-small" style="width:220px;">
+    Set category for T-SNE plot <i class="fa fa-caret-down"></i>
+  </button>
+  <ul id="tsne-plot-category" style="max-height:500px; overflow-y:scroll;" class="button-dropdown-list is-below"></ul>
+</span>
+
+
+<!--<layer id="placeholderlayer"></layer>-->
 
 <span id="placeholderdiv">
 
@@ -169,13 +244,13 @@ circle.hidden {
 
 </div>
 
-<span id="TSNEplot"></span>
-
-<span id="scatterplots"></span>
-
-<span id="info-table-wrapper">
-<div></div> <!-- keep this div here! -->
-</span>
+<div id="content-container">
+    <span id="scatterplots"></span>
+    <span id="TSNEplot"></span>
+    <span id="info-table-wrapper">
+        <div></div> <!-- keep this div here! -->
+    </span>
+</div>
 
 </body>
 

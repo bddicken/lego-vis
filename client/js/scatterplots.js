@@ -10,8 +10,8 @@
 //////////////////////// Some Global Vars///////////////////////////
 // Svg Margins:
 var margin = {top: 20, right: 15, bottom: 50, left: 50}, 
-    width = 350 - margin.left - margin.right, 
-    height = 350 - margin.top - margin.bottom;
+    width = 480 - margin.left - margin.right, 
+    height = 480 - margin.top - margin.bottom;
 
 var brushCell;
 var selection = []; 	// array of points selected by search
@@ -33,7 +33,7 @@ function brushstart() {
     
     // Reset all points to blue
     d3.selectAll("circle")
-        .attr("fill", "#559")
+        .attr("fill", "#1b9af7")
 	.attr("opacity", 0.2);
     selection = []; 
     highlightClickedPoint();
@@ -46,7 +46,7 @@ function brushend() {
 		d3.select("#set-logo").remove();
     		d3.selectAll(".hidden").classed("hidden", false);
     		d3.selectAll("circle")
-			.attr("fill", "#559")
+			.attr("fill", "#1b9af7")
 			.attr("r", 3)
 			.attr("opacity", 0.2);
   		clicked_set_id = ""; clicked_color = "";
@@ -59,7 +59,7 @@ function brushend() {
                 
         d3.select(this.parentNode)
             .selectAll("circle")
-            .attr("fill", "#559")
+            .attr("fill", "#1b9af7")
 	    .attr("opacity", 0.2); 
         
         d3.select(this.parentNode)
@@ -224,7 +224,7 @@ var appendScatterplot = function (data, xGetter, yGetter, xLabel, yLabel) {
     		.attr("id", function (d) { return "set"+d.set_id.replace(/\./g, "-"); })
     		.attr("cx", function (d) { return x(xGetter(d)); })
     		.attr("cy", function (d) { return y(yGetter(d)); } )
-    		.attr("fill", '#559')
+    		.attr("fill", '#1b9af7')
     		.attr("opacity", 0.2)
     		.attr("r", 3);
 }
@@ -293,7 +293,8 @@ legoData.onDataLoad = function() {
     	var path = node
     		.data(data2)
     		.enter()
-		.append("circle");
+            .append("circle")
+	    	.attr("fill", '#1b9af7');
    
     	// clicking a point highlights it
     	node.on("click", function(d,i){
@@ -317,7 +318,7 @@ legoData.onDataLoad = function() {
 	      d3.select("table").remove();
 	      d3.select("#set-logo").remove();	      
 	      d3.selectAll("circle")  
-	    	.attr("fill", '#559')
+	    	.attr("fill", '#1b9af7')
     	    	.attr("opacity", 0.2)
      	    	.attr("r", 3);
     	});
@@ -475,21 +476,43 @@ function tabulate(d,i) {
     ];
 
     d3.select("#info-table-wrapper").select("#set-logo").remove();
+    d3.select("#info-table-wrapper").select("#set-links").remove();
     d3.select("#info-table-wrapper").select("#info-table").remove();
 
     // Show the image for the set
     d3.select("#info-table-wrapper").append("img")
         .attr("id", "set-logo")
         .style("margin-top", "10px")
-        .style("margin-left", "10%")
-        .style("margin-right", "10%")
-        .style("width", "80%")
+        .style("margin-left", "5%")
+        .style("margin-right", "5%")
+        .style("width", "90%")
         .style("display", "inline-block")
         .style("border", "2px black solid")
         .attr("src", "download/img/sets/" + d.set_id + ".jpg")
         .attr("alt", "Lego set image");
+   
+    var links = [
+        {"site":"Rebrickable",
+         "url":"http://rebrickable.com/sets/" + d.set_id},
+        {"site":"BrickPicker", 
+         "url":"http://www.brickpicker.com/bpms/set.cfm?set=" + d.set_id}
+    ];
 
-    var table = d3.select("#info-table-wrapper").append("table")
+    d3.select("#info-table-wrapper")
+        .append("span")
+        .attr("id", "set-links")
+        .selectAll("#links").data(links).enter()
+        .append("div")
+        .style("margin-left", "5%")
+        .style("margin-right", "5%")
+        .style("width", "90%")
+        .style("text-align", "center")
+        .append("a")
+        .attr("href", function(d){ return d.url; })
+        .text(function(d) { return d.site; });
+
+    //var table = 
+    d3.select("#info-table-wrapper").append("table")
         .attr("id", "info-table")
         .style("display", "inline-block")
         .selectAll("tr")
@@ -501,7 +524,7 @@ function tabulate(d,i) {
         .enter()
         .append("td")
         .style("border", "1px black solid")
-        .text(function(d){return d;});      
+        .html(function(d){return d;});      
 }
 
 //////////////////////// User Search ////////////////////////////////////
@@ -559,22 +582,25 @@ function setUpSearch(data2){
 	function findSets(selection){
         
         d3.selectAll("circle")
-            .attr("fill", "#559")
+            .attr("fill", "#1b9af7")
 	    .attr("opacity", 0.2); 
         
 	  	if (selection.length ==0) {
+          alert("No Results Found");
+          /*
 		  d3.select("#noResult").remove();
 		  d3.select("#buttons")
-		    .append("p")
+		    .append("span")
 		    .attr("id", "noResult")
 		    .html("No Results Found");
+          */
 		}
 		else {
 		  d3.select("#noResult").remove();
 	  	  for (j=0; j< selection.length; j++){
 	  	    d3.selectAll("#set"+selection[j])
 		      .moveToFront()
-		      .attr("fill", "#FFFF00")
+		      .attr("fill", "#FF9F00")
 		      .attr("opacity", 1)
 		      .attr("r", 3);
 		  }
@@ -594,7 +620,7 @@ function setUpSearch(data2){
 // Helper function to color points
 function colorPoints(id, isSelected){
     if (isSelected) { 
-        return '#FFFF00';
+        return '#FF9F00';
     } 
 }
 
@@ -623,7 +649,7 @@ function updateClickedSet(d,i){
 function highlightClickedPoint() {
     d3.selectAll("#set"+clicked_set_id)
         .moveToFront()
-        .attr("fill", 'Lime')
+        .attr("fill", '#648F07')
         .attr("opacity", 1)
         .attr("r", 6);
 }

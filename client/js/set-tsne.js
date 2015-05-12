@@ -40,6 +40,12 @@ tsnePlotVar.appendVectorGraph = function(containerSelection, allData, dimension,
     var containerGroup = svg
         .append("g")
         .attr("class", "cont");
+    /*
+    containerGroup.append("rect")
+        .attr("width", "100%")
+        .attr("height", "100%")
+        .attr("fill", "white");
+    */
 
     var brushmove = function(p) { }
 
@@ -51,7 +57,7 @@ tsnePlotVar.appendVectorGraph = function(containerSelection, allData, dimension,
         var b10 = e[1][0];
         var b11 = e[1][1];
         
-        d3.selectAll("circle").attr("fill", '#559');
+        d3.selectAll("circle").attr("fill", '#1b9af7');
         
         svg.selectAll("circle").classed("hidden", function(d, i) {
             var xp = ((data.output[i][0]*20*ss + tx) + 400);
@@ -212,23 +218,24 @@ tsnePlotVar.appendVectorGraph = function(containerSelection, allData, dimension,
     var zoomBrushMode = true;
    
    // select tsne category
-   var selectCategory = d3.select("#tsne-plot-category").on("change", change);
+   var selectCategory = d3.select("#tsne-plot-category");//.on("change", change);
    var options = selectCategory.selectAll('option').data(allDataKeys);
 
    // Enter selection
-   options.enter().append("option").text(function(d,i) { return d; });
-
-   selectCategory
-        .append('option')
-        .text('category for t-sne plot')
-        .attr('selected', '');
+   options.enter()
+     .append("li")
+     .append("a")
+     .attr("href", "#")
+     .text(function(d,i) { return d; })
+     .attr("value", function(d,i) { return d; })
+     .on("click", change);
 
    function change() {
-       var selectedIndex = selectCategory.property('selectedIndex');
-       // get the selected category name
-       var dName = options[0][selectedIndex].__data__;
+       var dName = d3.select(this).attr("value");
        data = allData[dName];
        drawTsnePlot();
+       d3.select("#tsne-plot-category-button")
+        .html(dName + " <i class=\"fa fa-caret-down\"></i>");
    }
         
     var drawTsnePlot = function() {
@@ -237,6 +244,10 @@ tsnePlotVar.appendVectorGraph = function(containerSelection, allData, dimension,
         containerGroup = svg
             .append("g")
             .attr("class", "cont");
+    containerGroup.append("rect")
+        .attr("width", "100%")
+        .attr("height", "100%")
+        .attr("fill", "white");
         
         brush = d3.svg.brush()
             .x(x)
