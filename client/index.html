@@ -15,6 +15,14 @@
 
 <style>
 
+#loading {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
 #content-container {
     margin-left:auto;
     margin-right:auto;
@@ -233,8 +241,6 @@ circle.hidden {
 
 </span>
 
-<!--<layer id="placeholderlayer"></layer>-->
-
 <span id="placeholderdiv">
 
     <span class="image"  id="image_click0">
@@ -285,6 +291,12 @@ circle.hidden {
     </span>
 </div>
 
+<!-- loading icon -->
+<div class="middle" id="loading">
+        <span id="loading-spinner"></span>
+</div>
+
+
 </body>
 
 <!--<script src="http://d3js.org/d3.v3.min.js"></script>-->
@@ -294,7 +306,33 @@ circle.hidden {
 <script src="./js/tsne.js"></script>
 <script src="./js/set-tsne.js"></script>
 <script src="./js/scatterplots.js"></script>
+<script src="./js/spin.min.js"></script>
 
+
+<script>
+
+var opts = {
+    lines: 13, // The number of lines to draw
+    length: 20, // The length of each line
+    width: 10, // The line thickness
+    radius: 30, // The radius of the inner circle
+    corners: 1, // Corner roundness (0..1)
+    rotate: 0, // The rotation offset
+    direction: 1, // 1: clockwise, -1: counterclockwise
+    color: '#000', // #rgb or #rrggbb or array of colors
+    speed: 0.6, // Rounds per second
+    trail: 60, // Afterglow percentage
+    shadow: false, // Whether to render a shadow
+    hwaccel: false, // Whether to use hardware acceleration
+    className: 'spinner', // The CSS class to assign to the spinner
+    zIndex: 2e9, // The z-index (defaults to 2000000000)
+    top: '50%', // Top position relative to parent
+    left: '50%' // Left position relative to parent
+};
+var target = document.getElementById('loading-spinner');
+var spinner = new Spinner(opts).spin(target);
+
+</script>
 
 </html>
 

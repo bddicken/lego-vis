@@ -51,6 +51,9 @@ function brushend() {
 			.attr("opacity", 0.2);
   		clicked_set_id = ""; clicked_color = "";
 	} else {
+        console.log("begin");
+        controlSpinLoad(true);
+
         e = brush.extent();
         var e00 = e[0][0] - margin.left;
         var e10 = e[1][0] - margin.left;
@@ -75,6 +78,8 @@ function brushend() {
                 } 
                 return false;
             });
+        console.log("end");
+        controlSpinLoad(false);
     }
     if(clicked_set_id != undefined || clicked_set_id != "") highlightClickedPoint();
 }
@@ -343,6 +348,7 @@ legoData.onDataLoad = function() {
     // start image rotation
     rotater();
 
+    controlSpinLoad(false);
 };
 //////////////////////////////////////////////////////////////////////////////////////
 
@@ -711,4 +717,15 @@ $('.image').error(function(){
     .attr('src', './download/img/sets/'+All_Data[image_start].set_id+ '.jpg')
     .attr("value", image_start);
 });
+
+var controlSpinLoad = function(show) {
+    if (!show) {
+        d3.select("#loading-spinner").style("display", "none");
+    }
+    else {
+        console.log("show spinner");
+        d3.select("#loading-spinner")
+            .style("display", "inline");
+    }
+}
 

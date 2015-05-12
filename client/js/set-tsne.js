@@ -5,6 +5,8 @@ var tsnePlotVar = {};
 tsnePlotVar.appendVectorGraph = function(containerSelection, allData, dimension, totalWidth, totalHeight) {
 
     allDataKeys = Object.keys(allData);
+    allDataKeys.sort(function(lhs, rhs){ return rhs < lhs; });
+
     var data = allData['Star Wars'];
 
     console.log("appending graph!");
@@ -40,12 +42,6 @@ tsnePlotVar.appendVectorGraph = function(containerSelection, allData, dimension,
     var containerGroup = svg
         .append("g")
         .attr("class", "cont");
-    /*
-    containerGroup.append("rect")
-        .attr("width", "100%")
-        .attr("height", "100%")
-        .attr("fill", "white");
-    */
 
     var brushmove = function(p) { }
 
