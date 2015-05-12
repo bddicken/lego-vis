@@ -127,7 +127,7 @@ tsnePlotVar.appendVectorGraph = function(containerSelection, allData, dimension,
           .data(data.input.words)
           .attr("width", "30px")
           .attr("height", "30px")
-          .attr("xlink:href", function(d) { return "download/img/sets/" + d.set_id + ".jpg"; })
+          .attr("xlink:href", function(d) { return "./download/img/sets/" + d.set_id + ".jpg"; })
           .on("click", function(d) { 
             // TODO: THIS IS HACKY!!!
             d3.selectAll("#set" + d.set_id.replace(/\./g, "-"))
@@ -262,7 +262,7 @@ tsnePlotVar.appendVectorGraph = function(containerSelection, allData, dimension,
             .attr("class", "u");
 
         g.append("image")
-            .attr("href", function(d) { return "downloads/img/sets/" + d.set_id + ".jpg"; })
+            .attr("href", function(d) { return "./downloads/img/sets/" + d.set_id + ".jpg"; })
             .attr("width", "25px");
         /*
         g.append("circle")

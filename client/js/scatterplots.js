@@ -488,7 +488,7 @@ function tabulate(d,i) {
         .style("width", "90%")
         .style("display", "inline-block")
         .style("border", "2px black solid")
-        .attr("src", "download/img/sets/" + d.set_id + ".jpg")
+        .attr("src", "./download/img/sets/" + d.set_id + ".jpg")
         .attr("alt", "Lego set image");
    
     var links = [
@@ -696,9 +696,9 @@ function removeHighlight(id){
 			.duration(1000)
 			.each("end", function(){ 	
 				var image = d3.select("#banner_image"+current)
-				.attr('src', '/download/img/sets/'+shuffleSets[image_start].set_id+ '.jpg');
+				.attr('src', './download/img/sets/'+shuffleSets[image_start].set_id+ '.jpg');
 				$('img').error(function(){
-					$(this).attr("src", "/download/img/sets/" 
+					$(this).attr("src", "./download/img/sets/" 
 						+errorSet[image_start % 14].set_id+".jpg");});
 				image.transition()
 				.duration(1000)
