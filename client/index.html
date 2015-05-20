@@ -29,6 +29,7 @@
 }
 
 .text-input {
+  width:200px;
   height:25px;
   border-style: solid;
   border-color: #1b9af7;
@@ -171,9 +172,9 @@ body {
   line-height:70px;
   display: inline-block;
   margin-left:10px;
-  width: -moz-calc(99% - 980px);
-  width: -webkit-calc(99% - 980px);
-  width: calc(99% - 980px);
+  width: -moz-calc(99% - 1040px);
+  width: -webkit-calc(99% - 1040px);
+  width: calc(99% - 1040px);
   height:60px;
   overflow-x:hidden;
   overflow-y:hidden;
@@ -183,7 +184,7 @@ body {
   vertical-align: middle;
   /*line-height:70px;*/
   display: inline-block;
-  width:980px;
+  width:1032px;
   height:60px;
 }
 .image {
@@ -233,7 +234,7 @@ circle.hidden {
     </label>
 
     <span class="button-dropdown button-dropdown-primary" data-buttons="dropdown">
-      <button id="tsne-plot-category-button" class="button button-rounded button-primary button-small" style="width:220px;">
+      <button id="tsne-plot-category-button" class="button button-rounded button-primary button-small" style="width:auto;">
         Set category for T-SNE plot <i class="fa fa-caret-down"></i>
       </button>
       <ul id="tsne-plot-category" style="max-height:500px; overflow-y:scroll;" class="button-dropdown-list is-below"></ul>
@@ -339,6 +340,8 @@ var opts = {
 };
 var target = document.getElementById('loading-spinner');
 var spinner = new Spinner(opts).spin(target);
+
+controlSpinLoad(true);
 
 </script>
 

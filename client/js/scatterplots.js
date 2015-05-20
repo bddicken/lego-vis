@@ -53,7 +53,6 @@ function brushend() {
   		clicked_set_id = ""; clicked_color = "";
 	} else {
         console.log("begin");
-        controlSpinLoad(true);
 
         e = brush.extent();
         var e00 = e[0][0] - margin.left;
@@ -87,7 +86,10 @@ function brushend() {
  
 // Function when brush moves
 function brushed() {
-    // Don't do anything
+    // Would prefer to wait to enable the spinner until brushend,
+    // but for some reason it's hard to get it to work right. The UI
+    // doesnt seem to want to update to show it, even when I use setTimeouts.
+    controlSpinLoad(true);
 }
 
 // Create a brush on all svg elements
@@ -351,7 +353,7 @@ legoData.onDataLoad = function() {
 
     // load T-SNE
     var allSets = d3.select("#TSNEplot");
-    tsnePlot.appendVectorGraph(allSets, legoData.tsne, "dim", 1000, 800);
+    tsnePlot.appendVectorGraph(allSets, legoData.tsne, "dim", 2000, 800);
 
     // start image rotation
     rotater();
@@ -743,12 +745,17 @@ $('.image').error(function(){
 
 var controlSpinLoad = function(show) {
     if (!show) {
+        console.log("hide spinner");
         d3.select("#loading-spinner").style("display", "none");
+        d3.select("#loading-spinner")
+            .style("z-index", "0");
     }
     else {
         console.log("show spinner");
         d3.select("#loading-spinner")
             .style("display", "inline");
+        d3.select("#loading-spinner")
+            .style("z-index", "9999");
     }
 }
 

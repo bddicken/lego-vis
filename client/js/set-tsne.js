@@ -126,8 +126,8 @@ tsnePlotVar.appendVectorGraph = function(containerSelection, allData, dimension,
       // TODO: cleanup circle/text pairing
       svg.selectAll("image")
           .data(data.input.words)
-          .attr("width", "30px")
-          .attr("height", "30px")
+          .attr("width", "40px")
+          .attr("height", "40px")
           .attr("xlink:href", function(d) { return "./download/img/sets/" + d.set_id + ".jpg"; })
           .on("click", function(d) { 
             updateClickedSetWithKey(d.set_id);
@@ -160,7 +160,7 @@ tsnePlotVar.appendVectorGraph = function(containerSelection, allData, dimension,
                 return d.descr; 
             })
             .attr("x", function(d,i) { 
-                return ((data.output[i][0]*20*ss + tx) + 400) + 30;
+                return ((data.output[i][0]*20*ss + tx) + 400) + 40;
             })
             .attr("y", function(d,i) { 
                 return ((data.output[i][1]*20*ss + ty) + 400) + 15;
@@ -182,7 +182,7 @@ tsnePlotVar.appendVectorGraph = function(containerSelection, allData, dimension,
     }
 
     var zoomListener = d3.behavior.zoom()
-        .scaleExtent([0.02, 10])
+        .scaleExtent([0.1, 20])
         .center([0,0])
         .on("zoom", zoomHandler);
     
@@ -194,7 +194,7 @@ tsnePlotVar.appendVectorGraph = function(containerSelection, allData, dimension,
     var toggleZoomBrush = function() {
         if (zoomBrushMode) {
           tzl = d3.behavior.zoom()
-              .scaleExtent([0.1, 10])
+              .scaleExtent([0.1, 20])
               .center([0,0])
               .on("zoom", undefined);
           tzl(svg);
@@ -280,7 +280,7 @@ tsnePlotVar.appendVectorGraph = function(containerSelection, allData, dimension,
         updateEmbedding();
     
         zoomListener = d3.behavior.zoom()
-            .scaleExtent([0.1, 10])
+            .scaleExtent([0.1, 20])
             .center([0,0])
             .on("zoom", zoomHandler);
         
