@@ -519,6 +519,7 @@ function tabulate(d,i) {
         .style("width", "90%")
         .style("text-align", "center")
         .append("a")
+        .attr("target", "_blank")
         .attr("href", function(d){ return d.url; })
         .text(function(d) { return d.site; });
 
