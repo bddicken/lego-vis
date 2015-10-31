@@ -743,19 +743,22 @@ $('.image').error(function(){
     .attr("value", image_start);
 });
 
-var controlSpinLoad = function(show) {
+var controlSpinLoad = function(show, message) {
+    message = typeof message !== 'undefined' ? message : "Loading, please wait.";
     if (!show) {
         console.log("hide spinner");
-        d3.select("#loading-spinner").style("display", "none");
-        d3.select("#loading-spinner")
+        d3.selectAll(".loading-indicator").style("display", "none");
+        d3.selectAll(".loading-indicator")
             .style("z-index", "0");
     }
     else {
         console.log("show spinner");
-        d3.select("#loading-spinner")
+        d3.selectAll(".loading-indicator")
             .style("display", "inline");
-        d3.select("#loading-spinner")
+        d3.selectAll(".loading-indicator")
             .style("z-index", "9999");
+        d3.select("#loading-spinner-label")
+            .html(message);
     }
 }
 
