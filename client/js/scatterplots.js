@@ -79,9 +79,9 @@ function brushend() {
                 return false;
             });
         console.log("end");
-        controlSpinLoad(false);
     }
     if(clicked_set_id != undefined || clicked_set_id != "") highlightClickedPoint();
+    controlSpinLoad(false);
 }
  
 // Function when brush moves
