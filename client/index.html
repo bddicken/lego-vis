@@ -15,6 +15,14 @@
 
 <style>
 
+#loading-label {
+    position: fixed;
+    top: 65%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -65%);
+    transform: translate(-50%, -65%);
+}
+
 #loading {
     position: fixed;
     top: 50%;
@@ -301,21 +309,25 @@ circle.hidden {
 </div>
 
 <!-- loading icon -->
-<div class="middle" id="loading">
-        <span id="loading-spinner"></span>
+<div class="loading-indicator" id="loading">
+    <span id="loading-spinner"></span>
+</div>
+
+<div class="loading-indicator" id="loading-label">
+    <span id="loading-spinner-label"></span>
 </div>
 
 
 </body>
 
 <!--<script src="http://d3js.org/d3.v3.min.js"></script>-->
-<script src="./js/d3.v3.js"></script>
+<script src="./lib/d3.v3.js"></script>
 <script src="./js/lego-data.js"></script>
-<script src="./js/jquery-1.8.3.min.js"></script>
+<script src="./lib/jquery-1.8.3.min.js"></script>
 <script src="./js/tsne.js"></script>
 <script src="./js/set-tsne.js"></script>
 <script src="./js/scatterplots.js"></script>
-<script src="./js/spin.min.js"></script>
+<script src="./lib/spin.min.js"></script>
 
 
 <script>
@@ -341,7 +353,7 @@ var opts = {
 var target = document.getElementById('loading-spinner');
 var spinner = new Spinner(opts).spin(target);
 
-controlSpinLoad(true);
+controlSpinLoad(true, "Fetching LEGO data from server. This may take awhile :D");
 
 </script>
 
