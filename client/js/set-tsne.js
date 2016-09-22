@@ -258,7 +258,7 @@ tsnePlotVar.appendVectorGraph = function(containerSelection, allData, dimension,
             .attr("class", "u");
 
         g.append("image")
-            .attr("href", function(d) { return "./downloads/img/sets/" + d.set_id + ".jpg"; })
+            .attr("href", function(d) { return "./download/img/sets/" + d.set_id + ".jpg"; })
             .attr("width", "25px");
         /*
         g.append("circle")
