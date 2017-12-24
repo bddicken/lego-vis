@@ -12,10 +12,10 @@
 
 </body>
 
-<script src="../js/d3.v3.js"></script>
-<script src="../js/lego-data.js"></script>
-<script src="../js/jquery-1.8.3.min.js"></script>
-<script src="../js/tsne.js"></script>
+<script src="./lib/d3.v3.js"></script>
+<script src="./js/lego-data.js"></script>
+<script src="./lib/jquery-1.8.3.min.js"></script>
+<script src="./js/tsne.js"></script>
 <script>
 
 (function(console){
@@ -154,7 +154,7 @@ allTsneOuts = {};
 
 appendVectorGraph = function(data, key, left_to_compute) {
 
-    console.log("Deginning to compute t-sne graph layout.");
+    console.log("Beginning to compute t-sne graph layout.");
 
     // fiddle with the options for optimal speed/layout tradeoff
     var opt = {epsilon: 5, perplexity: 5};
@@ -178,7 +178,7 @@ appendVectorGraph = function(data, key, left_to_compute) {
           clearInterval(step_looper);
           allTsneOuts[key] = {'output':Y, 'input':data};
           if (left_to_compute == 0) {
-              console.save(allTsneOuts, 'tsnes.json')
+              console.save(allTsneOuts, 'tsne.json')
           }
         }
 
@@ -187,7 +187,7 @@ appendVectorGraph = function(data, key, left_to_compute) {
     }, 0);
 }
 
-var legoData = initLegoData('..')
+var legoData = initLegoData('.')
 legoData.onDataLoad = function() {
     
     var data = getTSNEInitialGraphBetter();
