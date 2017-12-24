@@ -47,7 +47,7 @@ To generate this:
 Because the download scripts are obsolete, all of the data (including `tsne.json`) is available
 as a Google Drive download. The link is below (you might need to request access):
 
-TODO
+https://drive.google.com/file/d/1zlbge36mihGmVSH5BV7ZrS2h99yk2p-5/view?usp=sharing
 
 Download, unzip, name the directory `download`, and place it in `client`.
 
